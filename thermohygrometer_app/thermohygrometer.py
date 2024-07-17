@@ -16,6 +16,7 @@ class Thermohygrometer:
             self.instrument.timeout = 2000  # Timeout de 5 segundos
             self.instrument.read_termination = '\r'
             self.instrument.write_termination = '\r'
+            self.set_format_data()
             self.get_format_data()
             idn = self.instrument.query('*IDN?')
             return idn
@@ -29,7 +30,7 @@ class Thermohygrometer:
             self.instrument.close()
         self.instrument = None
         self.rm.close()
-        time.sleep(1)
+        time.sleep(0.25)
 
     def send_command(self, command):
         if not self.instrument:
@@ -39,7 +40,7 @@ class Thermohygrometer:
             response = self.instrument.query(command)
             return response
         except Exception as e:
-            print(f"Error sending command to DewK 1620A: {e}")
+            print(f"Error sending command '{command}'to DewK 1620A: {e}")
             return None
 
     def read_real_time_data(self, channel: str, delay):
@@ -58,21 +59,22 @@ class Thermohygrometer:
         return self._format_data
     
     def set_format_data(self, status: bool = True):
-        self.send_command(f'FORMat:TDST:STATe {status}')
+        status = '1' if status else '0'
+        self.send_command(f'FORM:TDST:STAT {status}')
 
     def _parse_live_data_one_channel(self, data: str):
         parsed_data = data.split(',')
         result = {}
-
+        print(self._format_data, data)
         if not self._format_data:
             # response format: 22.80,47.3
-            result['temperature'] = parsed_data[0]
-            result['humidity'] = parsed_data[1]
+            result['temperature'] = float(parsed_data[0])
+            result['humidity'] = float(parsed_data[1])
         else:
             # response format: 1,1,22.86,C,47.4,%,2024,7,17,14,5,15
             parsed_data = parsed_data[2:]  # Skip the first two elements
-            result['temperature'] = parsed_data[0]
-            result['humidity'] = parsed_data[1]
+            result['temperature'] = float(parsed_data.pop(0))
+            result['humidity'] = float(parsed_data.pop(1))
             year, month, day, hour, minute, second = map(int, parsed_data[2:])
             result['date'] = datetime(year, month, day, hour, minute, second)
 

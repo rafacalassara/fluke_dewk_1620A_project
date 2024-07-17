@@ -52,6 +52,13 @@
 
                 if (data.error) {
                     document.getElementById('result').textContent = 'Error: ' + data.error;
+                } else if (data.data.date) {
+                    const formattedData = `
+                        <p><strong>Temperature:</strong> ${data.data.temperature} °C</p>
+                        <p><strong>Humidity:</strong> ${data.data.humidity} %</p>
+                        <p><strong>Date:</strong> ${data.data.date}</p>
+                    `;
+                    document.getElementById('result').innerHTML = formattedData;
                 } else {
                     const formattedData = `
                         <p><strong>Temperature:</strong> ${data.data.temperature} °C</p>
