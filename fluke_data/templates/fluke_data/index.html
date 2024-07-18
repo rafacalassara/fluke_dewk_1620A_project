@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Thermohygrometer Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+            text-align: center;
+            padding: 20px;
+        }
+        .data-form {
+            margin-bottom: 20px;
+        }
+        .result {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Thermohygrometer Data</h1>
+        <form id="data-form" class="data-form">
+            <button type="button" onclick="fetchRealTimeData()">Get Real-Time Data</button>
+        </form>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function fetchRealTimeData() {
+
+            document.getElementById('result').textContent = 'Fetching data...';
+
+            try {
+                const ws = new WebSocket(`ws://${window.location.host}/ws/data/`);
+
+                ws.onopen = function() {
+                    console.log('WebSocket connection opened');
+                };
+
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.error) {
+                        document.getElementById('result').textContent = 'Error: ' + data.error;
+                    } else {
+                        let formattedData = `
+                            <p><strong>Temperature:</strong> ${data.data.temperature} °C</p>
+                            <p><strong>Humidity:</strong> ${data.data.humidity} %</p>
+                        `;
+                        if (data.data.date) {
+                            formattedData += `<p><strong>Date:</strong> ${data.data.date}</p>`;
+                        }
+                        document.getElementById('result').innerHTML = formattedData;
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    document.getElementById('result').textContent = 'WebSocket error: ' + error.message;
+                };
+
+                ws.onclose = function() {
+                    console.log('WebSocket connection closed');
+                };
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error fetching data: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
