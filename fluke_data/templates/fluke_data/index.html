@@ -53,8 +53,10 @@
                             <p><strong>Temperature:</strong> ${data.data.temperature} °C</p>
                             <p><strong>Humidity:</strong> ${data.data.humidity} %</p>
                         `;
+                        console.log(`Temperature: ${data.data.temperature}°C, Humidity: ${data.data.humidity} %`);
                         if (data.data.date) {
                             formattedData += `<p><strong>Date:</strong> ${data.data.date}</p>`;
+                            console.log(`Date: ${data.data.date}`);
                         }
                         document.getElementById('result').innerHTML = formattedData;
                     }
