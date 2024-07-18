@@ -5,23 +5,28 @@ import time
 from datetime import datetime
 
 class Thermohygrometer:
+    SN: str
+    PN: str
+
     def __init__(self, ip, port=10001):
         self.ip_address = ip
         self.port = port
         self.rm = pyvisa.ResourceManager()
-        
+
         self.instrument = None
         self._format_data = None
 
     def connect(self):
         try:
             self.instrument = self.rm.open_resource(f'TCPIP0::{self.ip_address}::{self.port}::SOCKET')
-            self.instrument.timeout = 2000  # Timeout de 5 segundos
+            self.instrument.timeout = 2000  # Timeout de 2 segundos
             self.instrument.read_termination = '\r'
             self.instrument.write_termination = '\r'
             self.set_format_data()
             self.get_format_data()
             idn = self.instrument.query('*IDN?')
+            _,self.PN,self.SN,_ = idn.split(',')
+            print(f'Conectado ao PN: {self.PN}, SN: {self.SN}')
             return idn
         except Exception as e:
             print(f"Error connecting to DewK 1620A at {self.ip_address}: {e}")
