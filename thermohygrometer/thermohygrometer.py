@@ -7,6 +7,9 @@ from datetime import datetime
 class Thermohygrometer:
     SN: str
     PN: str
+    INSTRUMENT_NAME: str
+    SENSOR_SN: str
+    SENSOR_PN: str
 
     def __init__(self, ip, port=10001):
         self.ip_address = ip
@@ -24,10 +27,7 @@ class Thermohygrometer:
             self.instrument.write_termination = '\r'
             self.set_format_data()
             self.get_format_data()
-            idn = self.instrument.query('*IDN?')
-            _,self.PN,self.SN,_ = idn.split(',')
-            print(f'Conectado ao PN: {self.PN}, SN: {self.SN}')
-            return idn
+            self.get_instrument_personal_info()
         except Exception as e:
             print(f"Error connecting to DewK 1620A at {self.ip_address}: {e}")
             self.instrument = None
@@ -40,12 +40,12 @@ class Thermohygrometer:
         self.rm.close()
         time.sleep(0.25)
 
-    def send_command(self, command):
+    def send_command(self, command, response_needed=True):
         if not self.instrument:
             print("Thermohygrometer not connected.")
             return None
         try:
-            response = self.instrument.query(command)
+            response = self.instrument.query(command) if response_needed else self.instrument.write(command)
             return response
         except Exception as e:
             print(f"Error sending command '{command}'to DewK 1620A: {e}")
@@ -58,12 +58,11 @@ class Thermohygrometer:
     
     def set_format_data(self, status: bool = True):
         status = '1' if status else '0'
-        self.send_command(f'FORM:TDST:STAT {status}')
+        self.send_command(f'FORM:TDST:STAT {status}', response_needed=False)
 
     def _parse_live_data_one_channel(self, data: str):
         parsed_data = data.split(',')
         result = {}
-        # print(self._format_data, data)
         if self._format_data is True:
             # response format: 1,1,22.86,C,47.4,%,2024,7,17,14,5,15
             parsed_data = parsed_data[2:]  # Skip the first two elements
@@ -79,3 +78,11 @@ class Thermohygrometer:
             result['humidity'] = float(parsed_data[1])
 
         return result
+
+    def get_instrument_personal_info(self):
+        idn = self.send_command('*IDN?')
+        _,self.PN,self.SN,_ = idn.split(',')
+        time.sleep(0.25)
+        self.INSTRUMENT_NAME = self.send_command('SENSor1:IDENtification?').replace('"','')
+        print(f'Conected to PN: {self.PN}, SN: {self.SN}, Name: {self.INSTRUMENT_NAME}')
+        
