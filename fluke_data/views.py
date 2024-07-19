@@ -1,7 +1,7 @@
 # fluke_data/views.py
 from django.shortcuts import render
-from django.http import JsonResponse
-from .visa_communication import Instrument
+from .models import Thermohygrometer
 
 def index(request):
-    return render(request, 'fluke_data/index.html')
+    instruments = Thermohygrometer.objects.all()
+    return render(request, 'fluke_data/index.html', {'instruments': instruments})
