@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Thermohygrometer Data{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{% block header %}Thermohygrometer Data{% endblock %}</h1>
+        </div>
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+        <div class="footer">
+            {% block footer %}© 2024 Thermohygrometer Data{% endblock %}
+        </div>
+    </div>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,55 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Thermohygrometer Data</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            width: 50%;
-            margin: auto;
-            text-align: center;
-            padding: 20px;
-        }
-        .data-form {
-            margin-bottom: 20px;
-        }
-        .result {
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Thermohygrometer Data</h1>
-        <form id="data-form" class="data-form">
-            <button type="button" onclick="fetchRealTimeData()">Get Real-Time Data</button>
-        </form>
-        <div id="result" class="result"></div>
-        <div id="instruments">
-            {% for instrument in instruments %}
-                <p><strong>PN:</strong> {{ instrument.pn }}</p>
-                <p><strong>SN:</strong> {{ instrument.sn }}</p>
-                <p><strong>Name:</strong> {{ instrument.instrument_name }}</p>
-                <hr>
-            {% endfor %}
-        </div>
-    </div>
+{% extends "fluke_data/base.html" %}
 
+{% block title %}Thermohygrometer Data{% endblock %}
+
+{% block content %}
+    <form id="data-form" class="data-form">
+        <label for="thermohygrometer">Select Thermohygrometer:</label>
+        <select id="thermohygrometer" name="thermohygrometer"></select><br><br>
+        <button type="button" onclick="fetchRealTimeData()">Get Real-Time Data</button>
+        <button type="button" id="close-button" onclick="closeConnection()" style="display: none;">Close Connection</button>
+    </form>
+    <div id="result" class="result"></div>
+{% endblock %}
+
+{% block extra_scripts %}
     <script>
-        async function fetchRealTimeData() {
+        let ws = null;
 
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/get_thermohygrometers/');
+                const thermohygrometers = await response.json();
+                const dropdown = document.getElementById('thermohygrometer');
+                thermohygrometers.forEach(thermo => {
+                    const option = document.createElement('option');
+                    option.value = thermo.id;
+                    option.textContent = `${thermo.instrument_name} (PN: ${thermo.pn}, SN: ${thermo.sn})`;
+                    dropdown.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching thermohygrometers:', error);
+            }
+        });
+
+        async function fetchRealTimeData() {
+            const selectedThermohygrometer = document.getElementById('thermohygrometer').value;
             document.getElementById('result').textContent = 'Fetching data...';
 
+            if (ws) {
+                ws.close();
+            }
+
             try {
-                const ws = new WebSocket(`ws://${window.location.host}/ws/data/`);
+                ws = new WebSocket(`ws://${window.location.host}/ws/data/${selectedThermohygrometer}/`);
 
                 ws.onopen = function() {
                     console.log('WebSocket connection opened');
+                    document.getElementById('close-button').style.display = 'inline-block';
                 };
 
                 ws.onmessage = function(event) {
@@ -74,11 +70,21 @@
 
                 ws.onclose = function() {
                     console.log('WebSocket connection closed');
+                    document.getElementById('close-button').style.display = 'none';
                 };
             } catch (error) {
                 document.getElementById('result').textContent = 'Error fetching data: ' + error.message;
             }
         }
+
+        function closeConnection() {
+            if (ws) {
+                ws.send(JSON.stringify({ command: 'disconnect' }));
+                ws.close();
+                document.getElementById('result').textContent = 'WebSocket connection closed';
+                ws = null;
+                document.getElementById('close-button').style.display = 'none';
+            }
+        }
     </script>
-</body>
-</html>
+{% endblock %}
