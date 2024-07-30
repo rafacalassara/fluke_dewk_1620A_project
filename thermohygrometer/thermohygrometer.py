@@ -73,6 +73,7 @@ class Thermohygrometer:
             date = datetime(year, month, day, hour, minute, second)
             date = date.isoformat().replace('T',' ').replace('-','/')
             result['date'] = date
+            # returns : 
         else:
             # response format: 22.80,47.3
             result['temperature'] = float(parsed_data[0])

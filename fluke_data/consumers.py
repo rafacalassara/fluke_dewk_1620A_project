@@ -4,7 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import asyncio
 from .visa_communication import Instrument
 from asgiref.sync import sync_to_async
-from .models import Thermohygrometer
+from .models import ThermohygrometerModel
 
 class DataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -21,7 +21,7 @@ class DataConsumer(AsyncWebsocketConsumer):
                 await asyncio.sleep(1)
 
     def get_instrument(self):
-        thermo = Thermohygrometer.objects.get(id=self.thermohygrometer_id)
+        thermo = ThermohygrometerModel.objects.get(id=self.thermohygrometer_id)
         instrument =  Instrument(thermo.ip_address)
 
         return instrument

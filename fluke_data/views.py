@@ -1,13 +1,13 @@
 # fluke_data/views.py
 from django.shortcuts import render
 from django.http import JsonResponse
-from .models import Thermohygrometer
+from .models import ThermohygrometerModel
 
 def index(request):
     return render(request, 'fluke_data/index.html')
 
 def get_thermohygrometers(request):
-    thermohygrometers = Thermohygrometer.objects.all()
+    thermohygrometers = ThermohygrometerModel.objects.all()
     data = [
         {
             'id': thermo.id,
