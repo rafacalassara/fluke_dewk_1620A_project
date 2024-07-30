@@ -10,16 +10,21 @@ class DataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.thermohygrometer_id = self.scope['url_route']['kwargs']['thermohygrometer_id']
         self.instrument = await sync_to_async(self.get_instrument)()
-        await self.accept()
+        print(self.instrument.instrument)
 
-        while True:
-            data = await sync_to_async(self.instrument.get_data)()
-            await self.send(text_data=json.dumps({'data': data}))
-            await asyncio.sleep(1)
+        if self.instrument.instrument:
+            await self.accept()
+
+            while True:
+                data = await sync_to_async(self.instrument.get_data)()
+                await self.send(text_data=json.dumps({'data': data}))
+                await asyncio.sleep(1)
 
     def get_instrument(self):
         thermo = Thermohygrometer.objects.get(id=self.thermohygrometer_id)
-        return Instrument(thermo.ip_address)
+        instrument =  Instrument(thermo.ip_address)
+
+        return instrument
 
     async def disconnect(self, close_code):
         self.running = False
