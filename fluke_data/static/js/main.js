@@ -1,4 +1,5 @@
 let ws = null;
+let selectedInstrumentName = '';
 
 document.addEventListener('DOMContentLoaded', async function() {
     try {
@@ -17,7 +18,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 async function fetchRealTimeData() {
-    const selectedThermohygrometer = document.getElementById('thermohygrometer').value;
+    const dropdown = document.getElementById('thermohygrometer');
+    const selectedThermohygrometer = dropdown.value;
+    selectedInstrumentName = dropdown.options[dropdown.selectedIndex].text;
     document.getElementById('result').textContent = 'Fetching data...';
 
     if (ws) {
@@ -65,7 +68,7 @@ function closeConnection() {
     if (ws) {
         ws.send(JSON.stringify({ command: 'disconnect' }));
         ws.close();
-        document.getElementById('result').textContent = 'WebSocket connection closed';
+        document.getElementById('result').textContent = `Disconnected from: ${selectedInstrumentName}`;
         ws = null;
         document.getElementById('close-button').style.display = 'none';
     }
