@@ -25,6 +25,3 @@ class MeasuresModel(models.Model):
     date = models.DateTimeField()
     pn = models.CharField(max_length=100, blank=True, null=True)
     sn = models.CharField(max_length=100, blank=True, null=True)
-
-    def __str__(self):
-        return f"Measure for {self.pn_sn} on {self.date.strftime('%Y-%m-%d %H:%M:%S')}"
