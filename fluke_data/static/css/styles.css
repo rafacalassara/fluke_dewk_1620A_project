@@ -19,14 +19,14 @@ body {
     text-align: center;
 }
 .header, .footer {
-    padding: 20px 0;
+    padding: 5px 0;
 }
 .header {
-    border-bottom: 1px solid #ddd;
+    border-bottom: 2px solid #ddd;
 }
 .footer {
-    border-top: 1px solid #ddd;
-    margin-top: 20px;
+    border-top: 2px solid #ddd;
+    margin-top: 10px;
 }
 .data-form {
     margin-bottom: 20px;
@@ -85,4 +85,49 @@ th, td {
 
 th {
     background-color: #f2f2f2;
+}
+
+.nav-container {
+    margin-top: 10px;
+    margin-bottom: 10px;
+
+}
+
+nav {
+    background: linear-gradient(180deg, #333, #555); /* Adds a gradient for a smooth effect */
+    color: white;
+    padding: 1px 5;
+    font-family: 'Roboto', sans-serif;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Softer shadow for a modern look */
+    border-radius: 10px; /* Rounded corners for the navigation bar */
+    margin: 0 auto; /* Centers the nav bar horizontally */
+    overflow: hidden; /* Ensures that content does not overflow outside the rounded corners */
+    display: inline-block;
+}
+
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center; /* Centers the nav items */
+    align-items: center;
+}
+
+nav li {
+    margin: 0 15px; /* Adds spacing between nav items */
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px; /* Adds padding around the text */
+    display: block;
+    border-radius: 20px; /* Softer, more rounded corners for the links */
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+}
+
+nav a:hover {
+    background-color: rgba(255, 255, 255, 0.2); /* Light background color on hover */
+    transform: translateY(-3px); /* Slight lift effect on hover */
 }

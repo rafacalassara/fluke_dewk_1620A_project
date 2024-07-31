@@ -14,9 +14,15 @@
         <div class="header">
             <h1>{% block header %}Thermohygrometer Data{% endblock %}</h1>
         </div>
+
+        <div class="nav-container">
+            {% include "fluke_data/partials/nav.html" %}
+        </div>
+        
         <div class="content">
             {% block content %}{% endblock %}
         </div>
+        
         <div class="footer">
             {% block footer %}© 2024 Thermohygrometer Data{% endblock %}
         </div>
