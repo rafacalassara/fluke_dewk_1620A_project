@@ -1,5 +1,6 @@
 // static/js/main.js
 let thermohygrometerConnections = {};
+const RECONNECT_DELAY = 5000; // Time in milliseconds to wait before trying to reconnect
 
 document.addEventListener('DOMContentLoaded', async function() {
     try {
@@ -47,7 +48,7 @@ async function addThermohygrometer() {
 
     resultContainer.appendChild(resultDiv);
 
-    try {
+    function createWebSocket() {
         const ws = new WebSocket(`ws://${window.location.host}/ws/data/${selectedThermohygrometer}/`);
         
         thermohygrometerConnections[selectedThermohygrometer] = ws;
@@ -77,24 +78,23 @@ async function addThermohygrometer() {
 
         ws.onerror = function(error) {
             console.error(`WebSocket error for ${selectedInstrumentName}:`, error);
-            // resultDiv.removeChild(connectingMessage);
-            resultDiv.innerHTML += `<p>Error connecting to ${thermoName}: ${error.message}</p>`;
-            delete thermohygrometerConnections[selectedThermohygrometer];
+            handleReconnection();
         };
 
         ws.onclose = function() {
             console.log(`WebSocket connection closed for ${selectedInstrumentName}`);
-            delete thermohygrometerConnections[selectedThermohygrometer];
-            if (document.contains(resultDiv)) {
-                resultContainer.removeChild(resultDiv);
-            }
+            handleReconnection();
         };
-    } catch (error) {
-        console.error(`Error establishing WebSocket connection for ${selectedInstrumentName}:`, error);
-        resultDiv.removeChild(connectingMessage);
-        resultDiv.innerHTML += `<p>Error fetching data: ${error.message}</p>`;
-        delete thermohygrometerConnections[selectedThermohygrometer];
+
+        function handleReconnection() {
+            resultDiv.removeChild(connectingMessage);
+            resultDiv.innerHTML += `<p>Reconnecting to ${thermoName}...</p>`;
+            delete thermohygrometerConnections[selectedThermohygrometer];
+            setTimeout(createWebSocket, RECONNECT_DELAY); // Attempt to reconnect after a delay
+        }
     }
+
+    createWebSocket();
 }
 
 function closeConnection(id) {
