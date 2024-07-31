@@ -4,13 +4,13 @@ body {
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     min-height: 100vh;
 }
 .container {
     width: 80%;
-    max-width: 600px;
+    max-width: 800px;
     margin: 20px;
     padding: 20px;
     background-color: #fff;
@@ -31,11 +31,19 @@ body {
 .data-form {
     margin-bottom: 20px;
 }
+.result-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
 .result {
     border: 1px solid #ccc;
     padding: 10px;
     border-radius: 5px;
     background-color: #f9f9f9;
+    width: 100%;
+    max-width: 350px;
 }
 button {
     padding: 10px 15px;

@@ -4,11 +4,9 @@
 
 {% block content %}
     <form id="data-form" class="data-form">
-        <label for="thermohygrometer">Select Thermohygrometer:</label>
+        <label for="thermohygrometer">Select Thermohygrometer to connect:</label>
         <select id="thermohygrometer" name="thermohygrometer"></select><br><br>
-        <button type="button" onclick="fetchRealTimeData()">Get Real-Time Data</button>
-        <button type="button" id="close-button" onclick="closeConnection()" style="display: none;">Close Connection</button>
+        <button type="button" onclick="addThermohygrometer()">Add Thermohygrometer</button>
     </form>
-    <div id="result" class="result"></div>
+    <div id="result-container" class="result-container"></div>
 {% endblock %}
-

@@ -1,5 +1,4 @@
-let ws = null;
-let selectedInstrumentName = '';
+let thermohygrometerConnections = {};
 
 document.addEventListener('DOMContentLoaded', async function() {
     try {
@@ -9,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         thermohygrometers.forEach(thermo => {
             const option = document.createElement('option');
             option.value = thermo.id;
-            option.textContent = `${thermo.instrument_name} (PN: ${thermo.pn}, SN: ${thermo.sn})`;
+            option.textContent = `${thermo.instrument_name} - PN: ${thermo.pn}, SN: ${thermo.sn}`;
             dropdown.appendChild(option);
         });
     } catch (error) {
@@ -17,59 +16,94 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-async function fetchRealTimeData() {
+function addThermohygrometer() {
     const dropdown = document.getElementById('thermohygrometer');
     const selectedThermohygrometer = dropdown.value;
-    selectedInstrumentName = dropdown.options[dropdown.selectedIndex].text;
-    document.getElementById('result').textContent = 'Fetching data...';
+    const selectedInstrumentName = dropdown.options[dropdown.selectedIndex].text;
+    const selectedThermo = dropdown.options[dropdown.selectedIndex].textContent;
 
-    if (ws) {
-        ws.close();
+    if (thermohygrometerConnections[selectedThermohygrometer]) {
+        alert('This thermohygrometer is already connected.');
+        return;
     }
 
+    const resultContainer = document.getElementById('result-container');
+    const resultDiv = document.createElement('div');
+    resultDiv.id = `result-${selectedThermohygrometer}`;
+    resultDiv.className = 'result';
+    const thermoName = selectedInstrumentName.split(' - ')[0]; // Instrument Name
+    const thermoPNSN = selectedInstrumentName.split(' - ')[1]; // PN and SN
+
+    const connectingMessage = document.createElement('p');
+    connectingMessage.textContent = 'Connecting...';
+    resultDiv.appendChild(connectingMessage);
+    const resultHeader = document.createElement('h3');
+    resultHeader.textContent = thermoName;
+    resultDiv.appendChild(resultHeader);
+
+    const resultSubHeader = document.createElement('p');
+    resultSubHeader.textContent = thermoPNSN;
+    resultDiv.appendChild(resultSubHeader);
+
+    resultContainer.appendChild(resultDiv);
+
     try {
-        ws = new WebSocket(`ws://${window.location.host}/ws/data/${selectedThermohygrometer}/`);
+        const ws = new WebSocket(`ws://${window.location.host}/ws/data/${selectedThermohygrometer}/`);
+        
+        thermohygrometerConnections[selectedThermohygrometer] = ws;
 
         ws.onopen = function() {
-            console.log('WebSocket connection opened');
-            document.getElementById('close-button').style.display = 'inline-block';
+            console.log(`WebSocket connection opened for ${selectedInstrumentName}`);
+            resultDiv.removeChild(connectingMessage);
         };
 
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.error) {
-                document.getElementById('result').textContent = 'Error: ' + data.error;
+                resultDiv.innerHTML += `<p>Error: ${data.error}</p>`;
             } else {
                 let formattedData = `
                     <p><strong>Temperature:</strong> ${data.data.temperature} °C</p>
                     <p><strong>Humidity:</strong> ${data.data.humidity} %</p>
                 `;
                 if (data.data.date) {
-                    formattedData += `<p><strong>Date:</strong> ${data.data.date}</p>`;
+                    formattedData += `<p><strong>Instrument Date:</strong> ${data.data.date}</p>`;
                 }
-                document.getElementById('result').innerHTML = formattedData;
+                formattedData += `<button onclick="closeConnection('${selectedThermohygrometer}')">Close Connection</button>`;
+
+                resultDiv.innerHTML = resultHeader.outerHTML + resultSubHeader.outerHTML + formattedData;
             }
         };
 
         ws.onerror = function(error) {
-            document.getElementById('result').textContent = 'WebSocket error: ' + error.message;
+            console.error(`WebSocket error: ${error.message}`);
+            resultDiv.removeChild(connectingMessage);
+            alert(`Error connecting to: ${thermoName}`);
         };
 
         ws.onclose = function() {
-            console.log('WebSocket connection closed');
-            document.getElementById('close-button').style.display = 'none';
+            console.log(`WebSocket connection closed for ${selectedInstrumentName}`);
+            delete thermohygrometerConnections[selectedThermohygrometer];
+            resultContainer.removeChild(resultDiv);
         };
     } catch (error) {
-        document.getElementById('result').textContent = 'Error fetching data: ' + error.message;
+        console.error(`Error fetching data: ${error.message}`);
+        resultDiv.removeChild(connectingMessage);
+        resultDiv.innerHTML += `<p>Error fetching data: ${error.message}</p>`;
     }
 }
 
-function closeConnection() {
-    if (ws) {
-        ws.send(JSON.stringify({ command: 'disconnect' }));
-        ws.close();
-        document.getElementById('result').textContent = `Disconnected from: ${selectedInstrumentName}`;
-        ws = null;
-        document.getElementById('close-button').style.display = 'none';
+function closeConnection(id) {
+    if (thermohygrometerConnections[id]) {
+        thermohygrometerConnections[id].send(JSON.stringify({ command: 'disconnect' }));
+        thermohygrometerConnections[id].onclose = function() {
+            console.log(`WebSocket connection closed for instrument with id: ${id}`);
+            const resultDiv = document.getElementById(`result-${id}`);
+            if (resultDiv) {
+                resultDiv.remove();
+            }
+            delete thermohygrometerConnections[id];
+        };
+        thermohygrometerConnections[id].close();
     }
 }

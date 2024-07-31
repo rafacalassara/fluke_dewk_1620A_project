@@ -28,6 +28,7 @@ class DataConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         self.running = False
+        self.instrument.disconnect()
         await self.close()
 
     async def receive(self, text_data):
