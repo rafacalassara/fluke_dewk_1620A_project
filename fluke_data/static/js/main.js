@@ -1,3 +1,4 @@
+// static/js/main.js
 let thermohygrometerConnections = {};
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -16,11 +17,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-function addThermohygrometer() {
+async function addThermohygrometer() {
     const dropdown = document.getElementById('thermohygrometer');
     const selectedThermohygrometer = dropdown.value;
     const selectedInstrumentName = dropdown.options[dropdown.selectedIndex].text;
-    const selectedThermo = dropdown.options[dropdown.selectedIndex].textContent;
 
     if (thermohygrometerConnections[selectedThermohygrometer]) {
         alert('This thermohygrometer is already connected.');
@@ -76,20 +76,24 @@ function addThermohygrometer() {
         };
 
         ws.onerror = function(error) {
-            console.error(`WebSocket error: ${error.message}`);
-            resultDiv.removeChild(connectingMessage);
-            alert(`Error connecting to: ${thermoName}`);
+            console.error(`WebSocket error for ${selectedInstrumentName}:`, error);
+            // resultDiv.removeChild(connectingMessage);
+            resultDiv.innerHTML += `<p>Error connecting to ${thermoName}: ${error.message}</p>`;
+            delete thermohygrometerConnections[selectedThermohygrometer];
         };
 
         ws.onclose = function() {
             console.log(`WebSocket connection closed for ${selectedInstrumentName}`);
             delete thermohygrometerConnections[selectedThermohygrometer];
-            resultContainer.removeChild(resultDiv);
+            if (document.contains(resultDiv)) {
+                resultContainer.removeChild(resultDiv);
+            }
         };
     } catch (error) {
-        console.error(`Error fetching data: ${error.message}`);
+        console.error(`Error establishing WebSocket connection for ${selectedInstrumentName}:`, error);
         resultDiv.removeChild(connectingMessage);
         resultDiv.innerHTML += `<p>Error fetching data: ${error.message}</p>`;
+        delete thermohygrometerConnections[selectedThermohygrometer];
     }
 }
 

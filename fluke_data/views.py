@@ -3,8 +3,10 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from pyvisa import errors
 
 from .models import ThermohygrometerModel
+from .visa_communication import Instrument
 
 def index(request):
     return render(request, 'fluke_data/index.html')
@@ -30,14 +32,31 @@ def manage_thermohygrometers(request):
 def add_thermohygrometer(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        instrument_name = data.get('instrument_name')
-        pn = data.get('pn')
-        sn = data.get('sn')
-        if instrument_name and pn and sn:
-            ThermohygrometerModel.objects.create(instrument_name=instrument_name, pn=pn, sn=sn)
-            return JsonResponse({'success': True})
-        return JsonResponse({'success': False, 'error': 'Missing fields'})
+        instrument_ip = data.get('instrument_ip')
+        try:
+            instrument = Instrument(ip_address=instrument_ip)
+            instrument.connect()
+        except:
+            return JsonResponse({'success': False, 'error': 'Instrument not found on given IP address.'})
+        
+        name = instrument.INSTRUMENT_NAME
+        pn = instrument.PN
+        sn = instrument.SN
 
+        try:
+            if instrument_ip and pn and sn:
+                ThermohygrometerModel.objects.create(
+                    ip_address = instrument_ip,
+                    instrument_name=name,
+                    pn=pn,
+                    sn=sn
+                )
+                return JsonResponse({'success': True})
+        except:
+            return JsonResponse({'success': False, 'error': 'Error adding on database.'})
+
+        instrument.disconnect()
+    
 @csrf_exempt
 def delete_thermohygrometer(request, id):
     if request.method == 'DELETE':

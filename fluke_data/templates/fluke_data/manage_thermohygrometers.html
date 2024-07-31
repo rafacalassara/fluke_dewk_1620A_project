@@ -1,3 +1,5 @@
+<!-- templates/manage_thermohygrometer.html -->
+
 {% extends "fluke_data/base.html" %}
 
 {% block title %}Manage Thermohygrometers{% endblock %}
@@ -30,9 +32,7 @@
         </table>
         <h3>Add New Thermohygrometer</h3>
         <form id="add-thermo-form">
-            <input type="text" id="new-instrument-name" placeholder="Instrument Name" required>
-            <input type="text" id="new-pn" placeholder="PN" required>
-            <input type="text" id="new-sn" placeholder="SN" required>
+            <input type="text" id="new-instrument-ip" placeholder="Instrument IP" required>
             <button type="button" onclick="addThermohygrometer()">Add</button>
         </form>
     </div>
@@ -41,9 +41,7 @@
 {% block extra_scripts %}
 <script>
 async function addThermohygrometer() {
-    const name = document.getElementById('new-instrument-name').value;
-    const pn = document.getElementById('new-pn').value;
-    const sn = document.getElementById('new-sn').value;
+    const ip = document.getElementById('new-instrument-ip').value;
 
     try {
         const response = await fetch('/api/add_thermohygrometer/', {
@@ -52,7 +50,7 @@ async function addThermohygrometer() {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify({instrument_name: name, pn: pn, sn: sn})
+            body: JSON.stringify({instrument_ip: ip})
         });
         const data = await response.json();
         if (data.success) {
