@@ -33,7 +33,7 @@ class DataConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         self.running = False
         if hasattr(self.instrument, 'disconnect'):
-            self.instrument.disconnect()
+            await sync_to_async(self.instrument.disconnect)()
         await self.close()
 
     async def receive(self, text_data):
