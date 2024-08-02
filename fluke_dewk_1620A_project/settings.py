@@ -143,3 +143,12 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 120.0,  # every 2 minutes
     },
 }
+
+# Channels settings
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
