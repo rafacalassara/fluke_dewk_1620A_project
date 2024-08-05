@@ -12,7 +12,7 @@ def real_time_data(request):
     return render(request, 'fluke_data/real_time_data.html')
 
 def get_thermohygrometers(request):
-    thermohygrometers = ThermohygrometerModel.objects.all()
+    thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
     data = [
         {
             'id': thermo.id,
@@ -24,7 +24,7 @@ def get_thermohygrometers(request):
     return JsonResponse(data, safe=False)
 
 def manage_thermohygrometers(request):
-    thermohygrometers = ThermohygrometerModel.objects.all()
+    thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
     return render(request, 'fluke_data/manage_thermohygrometers.html', {'thermohygrometers': thermohygrometers})
 
 
