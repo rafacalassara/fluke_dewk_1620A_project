@@ -20,5 +20,4 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('fluke_data.urls')),
-    # path('legacy', include('thermohygrometer_app.urls')),
 ]
