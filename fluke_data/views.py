@@ -8,8 +8,8 @@ from pyvisa import errors
 from .models import ThermohygrometerModel
 from .visa_communication import Instrument
 
-def index(request):
-    return render(request, 'fluke_data/index.html')
+def real_time_data(request):
+    return render(request, 'fluke_data/real_time_data.html')
 
 def get_thermohygrometers(request):
     thermohygrometers = ThermohygrometerModel.objects.all()
