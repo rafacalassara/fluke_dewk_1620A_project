@@ -38,8 +38,6 @@ class Thermohygrometer:
         if self.instrument is not None:
             self.instrument.close()
         self.instrument = None
-        self.rm.close()
-        del self.rm
         time.sleep(0.25)
 
     def send_command(self, command, response_needed=True):

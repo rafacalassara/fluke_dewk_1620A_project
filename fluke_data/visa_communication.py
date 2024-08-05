@@ -19,7 +19,6 @@ class Instrument(Thermohygrometer):
                 return data
             except Exception as e:
                 return str(e)
-            time.sleep(2)
 
     def save_to_database(self):
         ThermohygrometerModel.objects.update_or_create(
