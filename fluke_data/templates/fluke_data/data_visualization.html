@@ -3,68 +3,119 @@
 {% block title %}Data Visualization{% endblock %}
 
 {% block content %}
+  <h1>Data Visualization</h1>
+
   <div class="container">
-    <h1>Data Visualization</h1>
-    <form method="post" class="data-form">
-      {% csrf_token %}
-      <div>
-        <label for="instrument">Select Instrument:</label>
-        <select id="instrument" name="instrument">
-          {% for thermohygrometer in thermohygrometers %}
-            <option value="{{ thermohygrometer.id }}">{{ thermohygrometer.instrument_name }} (PN: {{ thermohygrometer.pn }}, SN: {{ thermohygrometer.sn }})</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="start_date">Start Date:</label>
-        <input type="date" id="start_date" name="start_date">
-        <label for="start_time">Start Time:</label>
-        <input type="time" id="start_time" name="start_time">
-      </div>
-      <div>
-        <label for="end_date">End Date:</label>
-        <input type="date" id="end_date" name="end_date">
-        <label for="end_time">End Time:</label>
-        <input type="time" id="end_time" name="end_time">
-      </div>
-      <button type="submit">Submit</button>
-    </form>
-
-    {% if data %}
-    <h2>Measured Data</h2>
-      <div class="result-container">
-        <div class="result">
-          <p><strong>Instrument:</strong> {{ selected_instrument.instrument_name }} (PN: {{ selected_instrument.pn }}, SN: {{ selected_instrument.sn }})</p>
-          <p><strong>Searched Date Range</strong> 
-            <p><strong>From:</strong> {{ start_date }} {{ start_time }}</p> 
-            <p><strong>To:</strong> {{ end_date }} {{ end_time }}</p>
+    <!-- Form Section -->
+    <div class="form-section">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="instrument">Select Instrument:</label>
+          <select id="instrument" name="instrument">
+            {% for thermohygrometer in thermohygrometers %}
+              <option value="{{ thermohygrometer.id }}">{{ thermohygrometer.instrument_name }} (PN: {{ thermohygrometer.pn }}, SN: {{ thermohygrometer.sn }})</option>
+            {% endfor %}
+          </select>
         </div>
-      </div>
+        <div class="form-group">
+          <label for="start_date">Start Date:</label>
+          <input type="date" id="start_date" name="start_date">
+          <label for="start_time">Start Time:</label>
+          <input type="time" id="start_time" name="start_time" value="08:00">
+        </div>
+        <div class="form-group">
+          <label for="end_date">End Date:</label>
+          <input type="date" id="end_date" name="end_date">
+          <label for="end_time">End Time:</label>
+          <input type="time" id="end_time" name="end_time" value="16:00">
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
+  {% if data %}
+    <div class="data-section">
+      <!-- Container for Export Button, Measured Data, and Statistics -->
+      <h2>Measured Data</h2>
+      <div class="measured-data-container">
+        <div class="column">
+          <p><strong>Instrument</strong></p> 
+          <p>{{ selected_instrument.instrument_name }} (PN: {{ selected_instrument.pn }}, SN: {{ selected_instrument.sn }})</p>
+          <p><strong>Searched Date Range</strong>
+          <p><strong>From:</strong> {{ start_date }} {{ start_time }}
+          <p><strong>To:</strong> {{ end_date }} {{ end_time }}</p>
+
+          <!-- Export to CSV Button Section -->
+          <div class="export-section">
+            <form method="post" action="{% url 'export_to_csv' %}">
+              {% csrf_token %}
+              <input type="hidden" name="instrument_id" value="{{ selected_instrument.id }}">
+              <input type="hidden" name="start_date" value="{{ start_date }}">
+              <input type="hidden" name="start_time" value="{{ start_time }}">
+              <input type="hidden" name="end_date" value="{{ end_date }}">
+              <input type="hidden" name="end_time" value="{{ end_time }}">
+              <button type="submit">Export to .CSV</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="column">
+          <h3>Statistics for Data Range</h3>
+          <table>
             <tr>
-              <th>Date</th>
+              <th></th>
               <th>Temperature (°C)</th>
               <th>Humidity (%)</th>
             </tr>
-          </thead>
-          <tbody>
-            {% for measure in data %}
-              <tr>
-                <td>{{ measure.date|date:"d/m/Y H:i" }}</td>
-                <td>{{ measure.temperature }}</td>
-                <td>{{ measure.humidity }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            <tr>
+              <td>Min</td>
+              <td>{{ stats.min_temperature }}</td>
+              <td>{{ stats.min_humidity }}</td>
+            </tr>
+            <tr>
+              <td>Max</td>
+              <td>{{ stats.max_temperature }}</td>
+              <td>{{ stats.max_humidity }}</td>
+            </tr>
+            <tr>
+              <td>Avg</td>
+              <td>{{ stats.avg_temperature }}</td>
+              <td>{{ stats.avg_humidity }}</td>
+            </tr>
+          </table>
+        </div>
       </div>
-    {% else %}
-      {% if request.method == 'POST' %}
-        <p>No data found for the selected instrument and time range.</p>
-      {% endif %}
+
+      <!-- Data Table Section -->
+      <div class="data-table-section">
+        <div style="max-height: 400px; overflow-y: scroll; position: relative;">
+          <table>
+            <thead style="position: sticky; top: 0; background-color: white;">
+              <tr>
+                <th>Date</th>
+                <th>Temperature (°C)</th>
+                <th>Humidity (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for measure in data %}
+                <tr>
+                  <td>{{ measure.date|date:"d/m/Y H:i" }}</td>
+                  <td>{{ measure.temperature }}</td>
+                  <td>{{ measure.humidity }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    {% if request.method == 'POST' %}
+      <p>No data found for the selected instrument and time range.</p>
     {% endif %}
-  </div>
+  {% endif %}
 {% endblock %}

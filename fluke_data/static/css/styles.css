@@ -77,15 +77,14 @@ select, option {
 }
 
 .table-container {
-    width: 100%;
-    max-height: 400px;
-    overflow-y: scroll;
-    margin-top: 20px;
+    width: 70%; /* Adjust the width as needed */
+    margin: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    margin: 0 auto;
 }
 
 th, td {
@@ -96,9 +95,18 @@ th, td {
 
 th {
     background-color: #f2f2f2;
+}
+
+thead th {
     position: sticky;
     top: 0;
-    z-index: 1;
+    text-align: center;
+    background-color: #f2f2f2;
+}
+
+.scrollable-table {
+    max-height: 400px;
+    overflow-y: scroll;
 }
 
 .nav-container {
@@ -143,4 +151,59 @@ nav a {
 nav a:hover {
     background-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-3px);
+}
+
+/* Data Visualization Page Styles */
+.form-section, .export-section, .statistics-section {
+    flex: 1;
+    min-width: 300px;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.export-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.data-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.measured-data-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.column {
+    flex: 50%;
+    margin-right: 10px;
+}
+
+.data-table-section {
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+th {
+    background-color: #f2f2f2;
+    text-align: center;
 }

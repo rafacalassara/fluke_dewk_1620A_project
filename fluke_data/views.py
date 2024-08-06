@@ -1,10 +1,12 @@
 # fluke_data/views.py
 import json
+import csv
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-
+from django.db.models import Min, Max, Avg
 from django.utils.dateparse import parse_datetime
+
 from .models import *
 from .visa_communication import Instrument
 
@@ -69,12 +71,9 @@ def delete_thermohygrometer(request, id):
         
 def data_visualization(request):
     thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
-    data = None
+    data = []
     selected_instrument = None
-    start_date = ""
-    start_time = ""
-    end_date = ""
-    end_time = ""
+    stats = None
     
     if request.method == 'POST':
         instrument_id = request.POST.get('instrument')
@@ -82,23 +81,69 @@ def data_visualization(request):
         start_time = request.POST.get('start_time')
         end_date = request.POST.get('end_date')
         end_time = request.POST.get('end_time')
-        
+
         if instrument_id and start_date and start_time and end_date and end_time:
             selected_instrument = ThermohygrometerModel.objects.get(id=instrument_id)
-            start_datetime = parse_datetime(f"{start_date} {start_time}")
-            end_datetime = parse_datetime(f"{end_date} {end_time}")
+            start_datetime = f"{start_date} {start_time}"
+            end_datetime = f"{end_date} {end_time}"
+
             data = MeasuresModel.objects.filter(
                 instrument=selected_instrument,
-                date__range=(start_datetime, end_datetime)
+                date__range=[start_datetime, end_datetime]
             ).order_by('-date')
-    
+
+            stats = data.aggregate(
+                min_temperature=Min('temperature'),
+                max_temperature=Max('temperature'),
+                avg_temperature=Avg('temperature'),
+                min_humidity=Min('humidity'),
+                max_humidity=Max('humidity'),
+                avg_humidity=Avg('humidity'),
+            )
+
+        context = {
+            'thermohygrometers': thermohygrometers,
+            'data': data,
+            'selected_instrument': selected_instrument,
+            'start_date': start_date,
+            'start_time': start_time,
+            'end_date': end_date,
+            'end_time': end_time,
+            'stats': stats,
+        }
+        return render(request, 'fluke_data/data_visualization.html', context)
+
     context = {
         'thermohygrometers': thermohygrometers,
-        'data': data,
-        'selected_instrument': selected_instrument,
-        'start_date': start_date,
-        'start_time': start_time,
-        'end_date': end_date,
-        'end_time': end_time,
     }
     return render(request, 'fluke_data/data_visualization.html', context)
+
+def export_to_csv(request):
+    instrument_id = request.POST.get('instrument_id')
+    start_date = request.POST.get('start_date')
+    start_time = request.POST.get('start_time')
+    end_date = request.POST.get('end_date')
+    end_time = request.POST.get('end_time')
+
+    if instrument_id and start_date and start_time and end_date and end_time:
+        selected_instrument = ThermohygrometerModel.objects.get(id=instrument_id)
+        start_datetime = f"{start_date} {start_time}"
+        end_datetime = f"{end_date} {end_time}"
+
+        data = MeasuresModel.objects.filter(
+            instrument=selected_instrument,
+            date__range=[start_datetime, end_datetime]
+        ).order_by('-date')
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="measured_data_{selected_instrument.instrument_name}_{start_date}_{end_date}.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Temperature (°C)', 'Humidity (%)'])
+
+        for measure in data:
+            writer.writerow([measure.date.strftime("%d/%m/%Y %H:%M"), measure.temperature, measure.humidity])
+
+        return response
+
+    return HttpResponse("No data to export")
