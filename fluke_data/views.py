@@ -70,24 +70,35 @@ def delete_thermohygrometer(request, id):
 def data_visualization(request):
     thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
     data = None
-
+    selected_instrument = None
+    start_date = ""
+    start_time = ""
+    end_date = ""
+    end_time = ""
+    
     if request.method == 'POST':
         instrument_id = request.POST.get('instrument')
         start_date = request.POST.get('start_date')
         start_time = request.POST.get('start_time')
         end_date = request.POST.get('end_date')
         end_time = request.POST.get('end_time')
-
-        start_datetime = parse_datetime(f"{start_date} {start_time}")
-        end_datetime = parse_datetime(f"{end_date} {end_time}")
-
-        if instrument_id and start_datetime and end_datetime:
+        
+        if instrument_id and start_date and start_time and end_date and end_time:
+            selected_instrument = ThermohygrometerModel.objects.get(id=instrument_id)
+            start_datetime = parse_datetime(f"{start_date} {start_time}")
+            end_datetime = parse_datetime(f"{end_date} {end_time}")
             data = MeasuresModel.objects.filter(
-                instrument_id=instrument_id,
+                instrument=selected_instrument,
                 date__range=(start_datetime, end_datetime)
-            ).order_by('date')
-
-    return render(request, 'fluke_data/data_visualization.html', {
+            ).order_by('-date')
+    
+    context = {
         'thermohygrometers': thermohygrometers,
-        'data': data
-    })
+        'data': data,
+        'selected_instrument': selected_instrument,
+        'start_date': start_date,
+        'start_time': start_time,
+        'end_date': end_date,
+        'end_time': end_time,
+    }
+    return render(request, 'fluke_data/data_visualization.html', context)

@@ -2,6 +2,8 @@
 
 {% extends "fluke_data/base.html" %}
 
+{% block title %}Data Visualization{% endblock %}
+
 {% block content %}
   <h1>Data Visualization</h1>
   <form method="post">
@@ -30,10 +32,14 @@
   </form>
 
   {% if data %}
-    <h2>Measurement Data</h2>
-    <div style="max-height: 400px; overflow-y: scroll;">
+    <h2>Measured Data</h2>
+    <div>
+      <p><strong>Instrument:</strong> {{ selected_instrument.instrument_name }} (PN: {{ selected_instrument.pn }}, SN: {{ selected_instrument.sn }})</p>
+      <p><strong>Search Date Range:</strong> {{ start_date }} {{ start_time }} - {{ end_date }} {{ end_time }}</p>
+    </div>
+    <div style="max-height: 400px; overflow-y: scroll; position: relative;">
       <table>
-        <thead>
+        <thead style="position: sticky; top: 0; background-color: white;">
           <tr>
             <th>Date</th>
             <th>Temperature (°C)</th>
@@ -43,7 +49,7 @@
         <tbody>
           {% for measure in data %}
             <tr>
-              <td>{{ measure.date }}</td>
+              <td>{{ measure.date|date:"d/m/Y H:i" }}</td>
               <td>{{ measure.temperature }}</td>
               <td>{{ measure.humidity }}</td>
             </tr>
