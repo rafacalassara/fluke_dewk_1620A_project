@@ -3,6 +3,7 @@ from django.db import models
 
 class ThermohygrometerModel(models.Model):
     ip_address = models.CharField(max_length=100)
+    is_connected = models.BooleanField(default=False)
     pn = models.CharField(max_length=100)
     sn = models.CharField(max_length=100)
     instrument_name = models.CharField(max_length=100)
@@ -20,8 +21,10 @@ class ThermohygrometerModel(models.Model):
 
 class MeasuresModel(models.Model):
     instrument = models.ForeignKey(ThermohygrometerModel, on_delete=models.SET_NULL, null=True)
-    temperature = models.FloatField()
-    humidity = models.FloatField()
-    date = models.DateTimeField()
-    pn = models.CharField(max_length=100, blank=True, null=True)
-    sn = models.CharField(max_length=100, blank=True, null=True)
+    temperature = models.FloatField(editable=False)
+    humidity = models.FloatField(editable=False)
+    date = models.DateTimeField(editable=False)
+    pn = models.CharField(max_length=100, blank=True, null=True, editable=False)
+    sn = models.CharField(max_length=100, blank=True, null=True, editable=False)
+    sensor_sn = models.CharField(max_length=100, null=True, blank=True, editable=False)
+    sensor_pn = models.CharField(max_length=100, null=True, blank=True, editable=False)
