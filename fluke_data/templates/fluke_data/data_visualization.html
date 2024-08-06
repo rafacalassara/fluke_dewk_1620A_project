@@ -1,0 +1,57 @@
+<!-- templates/fluke_data/data_visualization.html -->
+
+{% extends "fluke_data/base.html" %}
+
+{% block content %}
+  <h1>Data Visualization</h1>
+  <form method="post">
+    {% csrf_token %}
+    <div>
+      <label for="instrument">Select Instrument:</label>
+      <select id="instrument" name="instrument">
+        {% for thermohygrometer in thermohygrometers %}
+          <option value="{{ thermohygrometer.id }}">{{ thermohygrometer.instrument_name }} (PN: {{ thermohygrometer.pn }}, SN: {{ thermohygrometer.sn }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="start_date">Start Date:</label>
+      <input type="date" id="start_date" name="start_date">
+      <label for="start_time">Start Time:</label>
+      <input type="time" id="start_time" name="start_time">
+    </div>
+    <div>
+      <label for="end_date">End Date:</label>
+      <input type="date" id="end_date" name="end_date">
+      <label for="end_time">End Time:</label>
+      <input type="time" id="end_time" name="end_time">
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+
+  {% if data %}
+    <h2>Measurement Data</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Temperature (°C)</th>
+          <th>Humidity (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for measure in data %}
+          <tr>
+            <td>{{ measure.date }}</td>
+            <td>{{ measure.temperature }}</td>
+            <td>{{ measure.humidity }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    {% if request.method == 'POST' %}
+      <p>No data found for the selected instrument and time range.</p>
+    {% endif %}
+  {% endif %}
+{% endblock %}

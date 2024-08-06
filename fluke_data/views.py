@@ -3,9 +3,11 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from pyvisa import errors
 
-from .models import ThermohygrometerModel
+from django.utils.dateparse import parse_datetime
+from django.db.models import Q
+from .forms import DataFilterForm
+from .models import *
 from .visa_communication import Instrument
 
 def real_time_data(request):
@@ -66,4 +68,28 @@ def delete_thermohygrometer(request, id):
             return JsonResponse({'success': True})
         except ThermohygrometerModel.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Thermohygrometer not found'})
+        
+def data_visualization(request):
+    thermohygrometers = ThermohygrometerModel.objects.all()
+    data = None
 
+    if request.method == 'POST':
+        instrument_id = request.POST.get('instrument')
+        start_date = request.POST.get('start_date')
+        start_time = request.POST.get('start_time')
+        end_date = request.POST.get('end_date')
+        end_time = request.POST.get('end_time')
+
+        start_datetime = parse_datetime(f"{start_date} {start_time}")
+        end_datetime = parse_datetime(f"{end_date} {end_time}")
+
+        if instrument_id and start_datetime and end_datetime:
+            data = MeasuresModel.objects.filter(
+                instrument_id=instrument_id,
+                date__range=(start_datetime, end_datetime)
+            ).order_by('date')
+
+    return render(request, 'fluke_data/data_visualization.html', {
+        'thermohygrometers': thermohygrometers,
+        'data': data
+    })
