@@ -5,8 +5,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from django.utils.dateparse import parse_datetime
-from django.db.models import Q
-from .forms import DataFilterForm
 from .models import *
 from .visa_communication import Instrument
 
@@ -70,7 +68,7 @@ def delete_thermohygrometer(request, id):
             return JsonResponse({'success': False, 'error': 'Thermohygrometer not found'})
         
 def data_visualization(request):
-    thermohygrometers = ThermohygrometerModel.objects.all()
+    thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
     data = None
 
     if request.method == 'POST':
