@@ -1,11 +1,11 @@
 # fluke_data/views.py
+
 import json
 import csv
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Min, Max, Avg
-from django.utils.dateparse import parse_datetime
 
 from .models import *
 from .visa_communication import Instrument
