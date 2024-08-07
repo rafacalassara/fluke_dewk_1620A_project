@@ -41,7 +41,7 @@
       <h2>Measured Data</h2>
       <div class="measured-data-container">
         <div class="column">
-          <p><strong>Instrument</strong></p> 
+          <h3><strong>Instrument</strong></h3> 
           <p>{{ selected_instrument.instrument_name }} (PN: {{ selected_instrument.pn }}, SN: {{ selected_instrument.sn }})</p>
           <p><strong>Searched Date Range</strong>
           <p><strong>From:</strong> {{ start_date }} {{ start_time }}
@@ -71,19 +71,19 @@
               <th>Humidity (%)</th>
             </tr>
             <tr>
-              <td>Min</td>
-              <td>{{ stats.min_temperature }}</td>
-              <td>{{ stats.min_humidity }}</td>
+              <td><strong>Min</strong></td>
+              <td>{{ stats.min_temperature|floatformat:2 }}</td>
+              <td>{{ stats.min_humidity|floatformat:2 }}</td>
             </tr>
             <tr>
-              <td>Max</td>
-              <td>{{ stats.max_temperature }}</td>
-              <td>{{ stats.max_humidity }}</td>
+              <td><strong>Max</strong></td>
+              <td>{{ stats.max_temperature|floatformat:2 }}</td>
+              <td>{{ stats.max_humidity|floatformat:2 }}</td>
             </tr>
             <tr>
-              <td>Avg</td>
-              <td>{{ stats.avg_temperature }}</td>
-              <td>{{ stats.avg_humidity }}</td>
+              <td><strong>Avg</strong></td>
+              <td>{{ stats.avg_temperature|floatformat:2 }}</td>
+              <td>{{ stats.avg_humidity|floatformat:2 }}</td>
             </tr>
           </table>
         </div>
