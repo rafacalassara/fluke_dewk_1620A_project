@@ -1,0 +1,16 @@
+<!-- templates/fluke_data/display_measures.html -->
+
+{% extends "fluke_data/base.html" %}
+
+{% load static %}
+
+{% block title %}Display Measures{% endblock %}
+
+{% block content %}
+    <h1>Connected Thermohygrometers</h1>
+    <div id="measures-container" class="result-container"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{% static 'js/display_measures.js' %}"></script>
+{% endblock %}

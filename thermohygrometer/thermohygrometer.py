@@ -10,6 +10,7 @@ class Thermohygrometer:
     INSTRUMENT_NAME: str
     SENSOR_SN: str
     SENSOR_PN: str
+    GROUP_NAME: str = ''
 
     def __init__(self, ip, port=10001):
         self.ip_address = ip
@@ -85,5 +86,6 @@ class Thermohygrometer:
         _,self.PN,self.SN,_ = idn.split(',')
         time.sleep(0.25)
         self.INSTRUMENT_NAME = self.send_command('SENSor1:IDENtification?').replace('"','')
+        self.GROUP_NAME = f"thermo_{self.PN}_{self.SN}"
         print(f'Conected to PN: {self.PN}, SN: {self.SN}, Name: {self.INSTRUMENT_NAME}')
         

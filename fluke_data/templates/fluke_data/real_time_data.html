@@ -1,6 +1,7 @@
 <!-- templates\fluke_data\real_time_data.html -->
-
 {% extends "fluke_data/base.html" %}
+
+{% load static %}
 
 {% block title %}Real Time Data{% endblock %}
 
@@ -12,3 +13,8 @@
     </form>
     <div id="result-container" class="result-container"></div>
 {% endblock %}
+
+{% block extra_scripts %}
+    <script src="{% static 'js/main.js' %}"></script>
+{% endblock %}
+

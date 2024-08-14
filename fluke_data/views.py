@@ -20,7 +20,21 @@ def get_thermohygrometers(request):
             'id': thermo.id,
             'pn': thermo.pn,
             'sn': thermo.sn,
-            'instrument_name': thermo.instrument_name
+            'instrument_name': thermo.instrument_name,
+            'group_name': thermo.group_name,
+        }
+    for thermo in thermohygrometers]
+    return JsonResponse(data, safe=False)
+
+def get_connected_thermohygrometers(request):
+    thermohygrometers = ThermohygrometerModel.objects.all().filter(is_connected=True).order_by('instrument_name')
+    data = [
+        {
+            'id': thermo.id,
+            'pn': thermo.pn,
+            'sn': thermo.sn,
+            'instrument_name': thermo.instrument_name,
+            'group_name': thermo.group_name,
         }
     for thermo in thermohygrometers]
     return JsonResponse(data, safe=False)
@@ -28,7 +42,6 @@ def get_thermohygrometers(request):
 def manage_thermohygrometers(request):
     thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
     return render(request, 'fluke_data/manage_thermohygrometers.html', {'thermohygrometers': thermohygrometers})
-
 
 @csrf_exempt
 def add_thermohygrometer(request):
@@ -44,18 +57,20 @@ def add_thermohygrometer(request):
         name = instrument.INSTRUMENT_NAME
         pn = instrument.PN
         sn = instrument.SN
+        group_name = f"thermo_{pn}_{sn}"  # Generate group_name based on pn and sn
 
         try:
             if instrument_ip and pn and sn:
                 ThermohygrometerModel.objects.create(
-                    ip_address = instrument_ip,
+                    ip_address=instrument_ip,
                     instrument_name=name,
                     pn=pn,
-                    sn=sn
+                    sn=sn,
+                    group_name=group_name  # Save the group_name
                 )
                 return JsonResponse({'success': True})
         except:
-            return JsonResponse({'success': False, 'error': 'Error adding on database.'})
+            return JsonResponse({'success': False, 'error': 'Error adding to database.'})
 
         instrument.disconnect()
     
@@ -147,3 +162,18 @@ def export_to_csv(request):
         return response
 
     return HttpResponse("No data to export")
+
+def display_measures(request):
+    thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
+    thermohygrometer_data = [
+        {
+            'id': thermo.id,
+            'pn': thermo.pn,
+            'sn': thermo.sn,
+            'instrument_name': thermo.instrument_name,
+            'group_name': thermo.group_name,  # Ensure the group_name is passed
+        }
+        for thermo in thermohygrometers
+    ]
+    # thermohygrometer_data = JsonResponse(thermohygrometers, safe=False)
+    return render(request, 'fluke_data/display_measures.html', {'thermohygrometers': thermohygrometers})

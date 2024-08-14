@@ -54,7 +54,8 @@ class DataConsumer(AsyncWebsocketConsumer):
     async def initialize_consumer(self):
         self.thermohygrometer_id = self.scope['url_route']['kwargs']['thermohygrometer_id']
         self.instrument = await sync_to_async(self.get_instrument)()
-        self.group_name = f"thermo_{self.thermohygrometer_id}"
+        self.group_name = f"thermohygrometer_{self.instrument.GROUP_NAME}"
+        self.listener_group_name = f'thermo_{self.thermohygrometer_id}'
         self.running = True
 
     async def add_to_group(self):
@@ -76,11 +77,29 @@ class DataConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({'message': 'Failed to connect'}))
 
     async def broadcast_data(self, data):
+        # Send data to the group associated with this consumer
+        info = {
+            'sn': self.instrument.SN,
+            'pn': self.instrument.PN,
+            'instrument_name': self.instrument.INSTRUMENT_NAME,
+            'group_name': self.instrument.GROUP_NAME,
+        }
+
         await self.channel_layer.group_send(
             self.group_name,
             {
                 'type': 'thermo_data',
                 'data': data,
+            }
+        )
+        data.setdefault('thermo_info', info)
+
+        # Forward the data to the listener_consumer_group
+        await self.channel_layer.group_send(
+            self.listener_group_name,
+            {
+                "type": "send_data_to_listeners",
+                "message": json.dumps(data)
             }
         )
 
@@ -117,3 +136,23 @@ class DataConsumer(AsyncWebsocketConsumer):
 
     def update_connection_status(self, status):
         ThermohygrometerModel.objects.filter(id=self.thermohygrometer_id).update(is_connected=status)
+
+
+class ListenerConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.thermohygrometer_id = self.scope['url_route']['kwargs']['thermohygrometer_id']
+        thermo = await sync_to_async(self.get_thermohygrometer)(self.thermohygrometer_id)
+        self.listener_group_name = f'thermo_{thermo.id}'
+
+        await self.channel_layer.group_add(self.listener_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.listener_group_name, self.channel_name)
+
+    async def send_data_to_listeners(self, event):
+        message = event['message']
+        await self.send(text_data=message)
+
+    def get_thermohygrometer(self, thermohygrometer_id):
+        return ThermohygrometerModel.objects.get(id=thermohygrometer_id)

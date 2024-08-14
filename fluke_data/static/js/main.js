@@ -1,4 +1,5 @@
 // static/js/main.js
+
 let thermohygrometerConnections = {};
 const RECONNECT_DELAY = 5000; // Time in milliseconds to wait before trying to reconnect
 const MAX_RECONNECT_ATTEMPTS = 3; // Number of times to attempt reconnection
@@ -131,8 +132,6 @@ async function addThermohygrometer() {
 
     createWebSocket();
 }
-
-
 
 function closeConnection(id) {
     if (thermohygrometerConnections[id]) {

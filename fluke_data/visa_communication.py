@@ -26,6 +26,7 @@ class Instrument(Thermohygrometer):
             defaults={
                 'pn': self.PN,
                 'sn': self.SN,
-                'instrument_name': self.INSTRUMENT_NAME
+                'instrument_name': self.INSTRUMENT_NAME,
+                'group_name': f"thermo_{self.PN}_{self.SN}",
             }
         )
