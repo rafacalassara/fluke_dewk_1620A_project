@@ -2,14 +2,25 @@
 
 import json
 import csv
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Min, Max, Avg
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model, login
 
+from .forms import *
 from .models import *
 from .visa_communication import Instrument
 
+User = get_user_model()
+# Check if the user is a manager
+
+def is_manager(user):
+    return user.is_manager
+
+@login_required
+@user_passes_test(is_manager)
 def real_time_data(request):
     return render(request, 'fluke_data/real_time_data.html')
 
@@ -39,10 +50,14 @@ def get_connected_thermohygrometers(request):
     for thermo in thermohygrometers]
     return JsonResponse(data, safe=False)
 
+@login_required
+@user_passes_test(is_manager)
 def manage_thermohygrometers(request):
     thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
     return render(request, 'fluke_data/manage_thermohygrometers.html', {'thermohygrometers': thermohygrometers})
 
+@login_required
+@user_passes_test(is_manager)
 @csrf_exempt
 def add_thermohygrometer(request):
     if request.method == 'POST':
@@ -73,7 +88,9 @@ def add_thermohygrometer(request):
             return JsonResponse({'success': False, 'error': 'Error adding to database.'})
 
         instrument.disconnect()
-    
+
+@login_required
+@user_passes_test(is_manager)    
 @csrf_exempt
 def delete_thermohygrometer(request, id):
     if request.method == 'DELETE':
@@ -175,5 +192,56 @@ def display_measures(request):
         }
         for thermo in thermohygrometers
     ]
-    # thermohygrometer_data = JsonResponse(thermohygrometers, safe=False)
     return render(request, 'fluke_data/display_measures.html', {'thermohygrometers': thermohygrometers})
+
+@login_required
+@user_passes_test(is_manager)
+def manage_users(request):
+    users = User.objects.all()
+    return render(request, 'fluke_data/user/manage_users.html', {'users': users})
+
+@login_required
+@user_passes_test(is_manager)
+def create_user(request):
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_users')  # Redirect after successful creation
+    else:
+        form = CreateUserForm()
+    return render(request, 'fluke_data/user/create_user.html', {'form': form})
+
+@login_required
+@user_passes_test(is_manager)
+def update_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        form = UpdateUserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_users')  # Redirect after successful update
+    else:
+        form = UpdateUserForm(instance=user)
+    return render(request, 'fluke_data/user/update_user.html', {'form': form})
+
+@login_required
+@user_passes_test(is_manager)
+def delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        user.delete()
+        return redirect('manage_users')  # Redirect after successful deletion
+    return render(request, 'fluke_data/user/delete_user.html', {'user': user})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = CustomLoginForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('real_time_data')  # Redirect to any view after successful login
+    else:
+        form = CustomLoginForm()
+
+    return render(request, 'fluke_data/login.html', {'form': form})

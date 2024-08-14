@@ -1,0 +1,31 @@
+<!-- templates/fluke_data/manage_users.html -->
+{% extends 'fluke_data/base.html' %}
+
+{% block content %}
+
+<h2>Manage Users</h2>
+<a href="{% url 'create_user' %}">Create New User</a>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Is Manager</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.is_manager }}</td>
+            <td>
+                <a href="{% url 'update_user' user.id %}">Edit</a>
+                <a href="{% url 'delete_user' user.id %}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

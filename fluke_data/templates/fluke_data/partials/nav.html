@@ -4,7 +4,12 @@
     <ul>
         <li><a href="{% url 'display_measures' %}">Home</a></li>
         <li><a href="{% url 'data_visualization' %}">Data Visualization</a></li>
+        {% if user.is_authenticated is not True %}
+        <li><a href="{% url 'login' %}">Login</a></li>
+        {% else %}
         <li><a href="{% url 'real_time_data' %}">Real Time Data</a></li>
         <li><a href="{% url 'manage_thermohygrometers' %}">Manage Thermohygrometers</a></li>
+        <li><a href="{% url 'manage_users' %}">Manage Users</a></li>
+        {% endif %}
     </ul>
 </nav>

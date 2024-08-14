@@ -26,8 +26,10 @@ SECRET_KEY = 'django-insecure-gfq%lc1l+j6@bu3qs@lu0wlxv0j7v5!$hvsc*d6ca1mzg6du@t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
+# Custom User
+AUTH_USER_MODEL = 'fluke_data.CustomUser'
 
 # Application definition
 
@@ -127,6 +129,8 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+STATIC_ROOT = BASE_DIR/'staticfiles'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -139,4 +143,6 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+LOGIN_URL = 'login'
 

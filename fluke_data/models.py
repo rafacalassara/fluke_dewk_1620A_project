@@ -1,5 +1,6 @@
 # fluke_data/models.py
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 class ThermohygrometerModel(models.Model):
     ip_address = models.CharField(max_length=100)
@@ -30,3 +31,7 @@ class MeasuresModel(models.Model):
     sn = models.CharField(max_length=100, blank=True, null=True, editable=False)
     sensor_sn = models.CharField(max_length=100, null=True, blank=True, editable=False)
     sensor_pn = models.CharField(max_length=100, null=True, blank=True, editable=False)
+
+class CustomUser(AbstractUser):
+    name = models.CharField(max_length=100)
+    is_manager = models.BooleanField(default=False)

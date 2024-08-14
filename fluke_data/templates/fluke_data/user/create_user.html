@@ -1,0 +1,14 @@
+{% extends "fluke_data/base.html" %}
+
+{% block title %}Create User{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Create User</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+</div>
+{% endblock %}
