@@ -53,7 +53,11 @@ class DataConsumer(AsyncWebsocketConsumer):
     # Helper Methods
     async def initialize_consumer(self):
         self.thermohygrometer_id = self.scope['url_route']['kwargs']['thermohygrometer_id']
-        self.instrument = await sync_to_async(self.get_instrument)()
+        try: 
+            self.instrument = await sync_to_async(self.get_instrument)()
+        except:
+            await sync_to_async(self.update_connection_status)(False)
+        
         self.group_name = f"thermohygrometer_{self.instrument.GROUP_NAME}"
         self.listener_group_name = f'thermo_{self.thermohygrometer_id}'
         self.running = True

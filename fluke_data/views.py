@@ -2,6 +2,8 @@
 
 import json
 import csv
+from datetime import datetime
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -116,23 +118,31 @@ def data_visualization(request):
 
         if instrument_id and start_date and start_time and end_date and end_time:
             selected_instrument = ThermohygrometerModel.objects.get(id=instrument_id)
-            start_datetime = f"{start_date} {start_time}"
-            end_datetime = f"{end_date} {end_time}"
+             # Combine date and time into datetime objects
+            try:
+                start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+                end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
 
-            data = MeasuresModel.objects.filter(
-                instrument=selected_instrument,
-                date__range=[start_datetime, end_datetime]
-            ).order_by('-date')
+                data = MeasuresModel.objects.filter(
+                    instrument=selected_instrument,
+                    date__range=[start_datetime, end_datetime]
+                ).order_by('-date')
 
-            stats = data.aggregate(
-                min_temperature=Min('temperature'),
-                max_temperature=Max('temperature'),
-                avg_temperature=Avg('temperature'),
-                min_humidity=Min('humidity'),
-                max_humidity=Max('humidity'),
-                avg_humidity=Avg('humidity'),
-            )
-
+                stats = data.aggregate(
+                    min_temperature=Min('temperature'),
+                    max_temperature=Max('temperature'),
+                    avg_temperature=Avg('temperature'),
+                    min_humidity=Min('humidity'),
+                    max_humidity=Max('humidity'),
+                    avg_humidity=Avg('humidity'),
+                )
+            except ValueError:
+                # Handle invalid date format
+                return render(request, 'fluke_data/data_visualization.html', {
+                    'thermohygrometers': thermohygrometers,
+                    'error': 'Invalid date or time format.',
+                })
+            
         context = {
             'thermohygrometers': thermohygrometers,
             'data': data,
