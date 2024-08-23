@@ -1,15 +1,14 @@
 # fluke_data/views.py
-
-import json
-import csv
+import json, csv
 from datetime import datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Min, Max, Avg
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model, login
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.hashers import make_password
 
 from .forms import *
 from .models import *
@@ -229,8 +228,12 @@ def update_user(request, user_id):
     if request.method == 'POST':
         form = UpdateUserForm(request.POST, instance=user)
         if form.is_valid():
-            form.save()
-            return redirect('manage_users')  # Redirect after successful update
+            user = form.save(commit=False)
+            new_password = form.cleaned_data.get('new_password1')
+            if new_password:
+                user.password = make_password(new_password)
+            user.save()
+            return redirect('manage_users')
     else:
         form = UpdateUserForm(instance=user)
     return render(request, 'fluke_data/user/update_user.html', {'form': form})
