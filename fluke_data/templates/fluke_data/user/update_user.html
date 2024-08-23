@@ -5,6 +5,16 @@
 {% block content %}
 <div class="container">
     <h2>Update User</h2>
+
+    <!-- Feedback message block -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <form method="POST">
         {% csrf_token %}
         <strong>{{ form.name.label_tag }}</strong> {{ form.name }}
@@ -17,12 +27,11 @@
     
             {{ form.new_password1.label_tag }} {{ form.new_password1 }}
             {{ form.new_password2.label_tag }} {{ form.new_password2 }}
-            
-
         </p>
         
-        {{ form.is_manager.label_tag }} {{ form.is_manager }}
-        <p></p>
+        <p>
+            {{ form.is_manager.label_tag }} {{ form.is_manager }}
+        </p>
         <button type="submit" class="btn btn-primary">Update</button>
     </form>
 </div>

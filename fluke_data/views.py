@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Min, Max, Avg
+from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.hashers import make_password
@@ -233,7 +234,10 @@ def update_user(request, user_id):
             if new_password:
                 user.password = make_password(new_password)
             user.save()
+            messages.success(request, 'User updated successfully.')
             return redirect('manage_users')
+        else:
+            messages.error(request, 'Failed to update user. Please correct the errors below.')
     else:
         form = UpdateUserForm(instance=user)
     return render(request, 'fluke_data/user/update_user.html', {'form': form})
