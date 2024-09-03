@@ -11,7 +11,7 @@ class ThermohygrometerModel(models.Model):
     sensor_sn = models.CharField(max_length=100, null=True, blank=True)
     sensor_pn = models.CharField(max_length=100, null=True, blank=True)
     group_name = models.CharField(max_length=100, null=True, blank=True)  # Add this line
-
+    last_connection_attempt = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.instrument_name} (PN: {self.pn}, SN: {self.sn})"
@@ -35,3 +35,35 @@ class MeasuresModel(models.Model):
 class CustomUser(AbstractUser):
     name = models.CharField(max_length=100)
     is_manager = models.BooleanField(default=False)
+
+class CalibrationCertificateModel(models.Model):
+    instrument = models.ForeignKey(ThermohygrometerModel, on_delete=models.CASCADE, related_name='calibrations')
+    calibration_date = models.DateField()
+    next_calibration_date = models.DateField()
+    certificate_number = models.CharField(max_length=100)
+
+    # Temperature calibration points
+    temp_point_1 = models.FloatField()
+    temp_correction_1 = models.FloatField()
+    temp_point_2 = models.FloatField()
+    temp_correction_2 = models.FloatField()
+    temp_point_3 = models.FloatField()
+    temp_correction_3 = models.FloatField()
+
+    # Humidity calibration points
+    humidity_point_1 = models.FloatField()
+    humidity_correction_1 = models.FloatField()
+    humidity_point_2 = models.FloatField()
+    humidity_correction_2 = models.FloatField()
+    humidity_point_3 = models.FloatField()
+    humidity_correction_3 = models.FloatField()
+
+    # Uncertainty values
+    temp_uncertainty = models.FloatField()
+    humidity_uncertainty = models.FloatField()
+
+    class Meta:
+        ordering = ['-calibration_date']
+
+    def __str__(self):
+        return f"Calibration for {self.instrument} on {self.calibration_date}"
