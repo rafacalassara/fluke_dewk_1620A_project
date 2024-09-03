@@ -1,0 +1,11 @@
+{% extends "fluke_data/base.html" %}
+{% block title %}Update Thermohygrometer{% endblock %}
+{% block content %}
+<h2>Update Thermohygrometer</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a href="{% url 'manage_thermohygrometers' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

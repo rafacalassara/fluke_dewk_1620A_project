@@ -2,6 +2,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm, PasswordChangeForm
+from .models import ThermohygrometerModel
 
 User = get_user_model()
 
@@ -74,3 +75,17 @@ class UpdateUserForm(UserChangeForm):
             self.add_error('new_password2', "The two password fields didn't match.")
         
         return cleaned_data
+
+class ThermohygrometerForm(forms.ModelForm):
+    class Meta:
+        model = ThermohygrometerModel
+        fields = ['instrument_name', 'ip_address', 'pn', 'sn', 'sensor_sn', 'sensor_pn', 'group_name']
+        widgets = {
+            'instrument_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'ip_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'pn': forms.TextInput(attrs={'class': 'form-control'}),
+            'sn': forms.TextInput(attrs={'class': 'form-control'}),
+            'sensor_sn': forms.TextInput(attrs={'class': 'form-control'}),
+            'sensor_pn': forms.TextInput(attrs={'class': 'form-control'}),
+            'group_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }

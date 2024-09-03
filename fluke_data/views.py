@@ -60,6 +60,20 @@ def manage_thermohygrometers(request):
 
 @login_required
 @user_passes_test(is_manager)
+def update_thermohygrometer(request, pk):
+    thermohygrometer = get_object_or_404(ThermohygrometerModel, pk=pk)
+    if request.method == 'POST':
+        form = ThermohygrometerForm(request.POST, instance=thermohygrometer)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Thermohygrometer updated successfully.')
+            return redirect('manage_thermohygrometers')
+    else:
+        form = ThermohygrometerForm(instance=thermohygrometer)
+    return render(request, 'fluke_data/thermohygrometer/update_thermohygrometer.html', {'form': form, 'thermohygrometer': thermohygrometer})
+
+@login_required
+@user_passes_test(is_manager)
 @csrf_exempt
 def add_thermohygrometer(request):
     if request.method == 'POST':

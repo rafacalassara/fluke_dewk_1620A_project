@@ -23,7 +23,7 @@
                     <td>{{ thermo.pn }}</td>
                     <td>{{ thermo.sn }}</td>
                     <td>
-                        <button onclick="editThermohygrometer({{ thermo.id }})">Edit</button>
+                        <a href="{% url 'update_thermohygrometer' thermo.pk %}" class="btn btn-primary btn-sm">Edit</a>
                         <button onclick="deleteThermohygrometer({{ thermo.id }})">Delete</button>
                     </td>
                 </tr>
@@ -89,9 +89,4 @@ async function deleteThermohygrometer(id) {
     }
 }
 
-async function editThermohygrometer(id) {
-    // Implementation for editing thermohygrometers can go here
-    alert('Edit functionality not implemented yet');
-}
-</script>
 {% endblock %}
