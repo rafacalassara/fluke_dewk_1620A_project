@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 class ThermohygrometerModel(models.Model):
     ip_address = models.CharField(max_length=100)
     is_connected = models.BooleanField(default=False)
+    time_interval_to_save_measures = models.IntegerField(default=5, help_text="Interval in minutes to save measures")
     pn = models.CharField(max_length=100)
     sn = models.CharField(max_length=100)
     instrument_name = models.CharField(max_length=100)

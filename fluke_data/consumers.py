@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from .visa_communication import Instrument
 from .models import ThermohygrometerModel, MeasuresModel
 
+from .connection_manager import InstrumentConnectionManager
+
 class DataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.initialize_consumer()
@@ -126,7 +128,8 @@ class DataConsumer(AsyncWebsocketConsumer):
 
     async def check_and_save_data(self, data):
         current_time = datetime.strptime(data['date'], '%Y/%m/%d %H:%M:%S')
-        if self.last_saved_time is None or current_time >= self.last_saved_time + timedelta(minutes=1):
+        time_interval = self.thermo.time_interval_to_save_measures
+        if self.last_saved_time is None or current_time >= self.last_saved_time + timedelta(minutes=time_interval):
             await sync_to_async(self.save_data_to_db)(data)
             self.last_saved_time = current_time
 
