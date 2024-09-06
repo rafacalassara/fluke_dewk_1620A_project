@@ -173,7 +173,7 @@ class Thermohygrometer:
     # Usage example
     def apply_correction(self, calibration_certificate, measurement_type, measured_value):
         correction = self.get_correction(calibration_certificate, measurement_type, measured_value)
-        corrected_value = round(measured_value + correction, 2)
+        corrected_value = round(measured_value - correction, 2)
         return corrected_value
 
     @staticmethod

@@ -142,7 +142,9 @@ class DataConsumer(AsyncWebsocketConsumer):
         MeasuresModel.objects.create(
             instrument=self.thermo,
             temperature=data['temperature'],
+            corrected_temperature=data['corrected_temperature'],
             humidity=data['humidity'],
+            corrected_humidity=data['corrected_humidity'],
             date=datetime.strptime(data['date'], '%Y/%m/%d %H:%M:%S')
         )
 

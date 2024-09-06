@@ -98,8 +98,15 @@
             <thead style="position: sticky; top: 0; background-color: white;">
               <tr>
                 <th>Date</th>
-                <th>Temperature (°C)</th>
-                <th>Humidity (%)</th>
+                <th colspan="2">Temperature (°C)</th>
+                <th colspan="2">Humidity (%)</th>
+              </tr>
+              <tr>
+                <th></th>
+                <th>NON CORRECTED</th>
+                <th>CORRECTED</th>
+                <th>NON CORRECTED</th>
+                <th>CORRECTED</th>
               </tr>
             </thead>
             <tbody>
@@ -107,7 +114,9 @@
                 <tr>
                   <td>{{ measure.date|date:"d/m/Y H:i" }}</td>
                   <td>{{ measure.temperature }}</td>
+                  <td>{{ measure.corrected_temperature }}</td>
                   <td>{{ measure.humidity }}</td>
+                  <td>{{ measure.corrected_humidity }}</td>
                 </tr>
               {% endfor %}
             </tbody>

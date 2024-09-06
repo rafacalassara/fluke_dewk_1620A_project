@@ -58,7 +58,9 @@ class ThermohygrometerModel(models.Model):
 class MeasuresModel(models.Model):
     instrument = models.ForeignKey(ThermohygrometerModel, on_delete=models.SET_NULL, null=True)
     temperature = models.FloatField(editable=False)
+    corrected_temperature = models.FloatField(editable=False, null=True, blank=True)
     humidity = models.FloatField(editable=False)
+    corrected_humidity = models.FloatField(editable=False, null=True, blank=True)
     date = models.DateTimeField(editable=False)
     pn = models.CharField(max_length=100, blank=True, null=True, editable=False)
     sn = models.CharField(max_length=100, blank=True, null=True, editable=False)
