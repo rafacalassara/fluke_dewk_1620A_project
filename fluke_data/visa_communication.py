@@ -12,6 +12,23 @@ class Instrument(Thermohygrometer):
         sync_to_async(self.save_to_database)()
 
     def get_data(self, channel='1'):
+        """
+        Retrieves live data from the specified channel of the thermohygrometer.
+
+        This method continuously attempts to query the instrument for live data, processes it, and returns the result.
+        It sends the command `READ?` followed by the channel number to the instrument, then parses the response.
+        
+        Args:
+            channel (str, optional): The channel number to query for data. Defaults to '1'.
+        
+        Returns:
+            dict or str:
+                - A dictionary with parsed temperature, humidity, and possibly date (depending on format).
+                - If an exception occurs, the exception message is returned as a string.
+        
+        Exceptions:
+            Captures and returns any exception raised during the instrument query or data parsing.
+        """
         while True:
             try:
                 data = self.instrument.query(f"READ? {channel}")
