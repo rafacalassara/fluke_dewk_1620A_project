@@ -6,7 +6,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from datetime import datetime, timedelta
 from .visa_communication import Instrument
-from .models import ThermohygrometerModel, MeasuresModel
+from .models import *
 
 from .connection_manager import InstrumentConnectionManager
 
@@ -16,6 +16,7 @@ class DataConsumer(AsyncWebsocketConsumer):
         if self.instrument and self.instrument.instrument:
             await self.add_to_group()
             await self.accept()
+            await sync_to_async(self.set_calibration_info)()
             await self.send_connecting_message()
             await sync_to_async(self.update_connection_status)(True)
             asyncio.create_task(self.send_data_loop())
@@ -40,10 +41,11 @@ class DataConsumer(AsyncWebsocketConsumer):
             try:
                 data = await sync_to_async(self.instrument.get_data)()
                 if data:
+                    data = await sync_to_async(self.correct_measures)(data)
                     await self.broadcast_data(data)
                     await self.check_and_save_data(data)
             except Exception as e:
-                await self.broadcast_error(str(e))
+                await self.broadcast_error(f'consumer.send_data_loop: {str(e)}')
             await asyncio.sleep(1)
 
     async def thermo_data(self, event):
@@ -56,13 +58,16 @@ class DataConsumer(AsyncWebsocketConsumer):
     async def initialize_consumer(self):
         self.thermohygrometer_id = self.scope['url_route']['kwargs']['thermohygrometer_id']
         try: 
-            self.instrument = await sync_to_async(self.get_instrument)()
+            self.instrument = await sync_to_async(self.get_instrument_from_db)()
         except:
             await sync_to_async(self.update_connection_status)(False)
         
         self.group_name = f"thermohygrometer_{self.instrument.GROUP_NAME}"
         self.listener_group_name = f'thermo_{self.thermohygrometer_id}'
         self.running = True
+
+    def set_calibration_info(self):
+        self.calibration_certificate = CalibrationCertificateModel.objects.get(id=self.thermo.calibration_certificate.id)
 
     async def add_to_group(self):
         await self.channel_layer.group_add(
@@ -122,7 +127,7 @@ class DataConsumer(AsyncWebsocketConsumer):
         if hasattr(self.instrument, 'disconnect'):
             await sync_to_async(self.instrument.disconnect)()
 
-    def get_instrument(self):
+    def get_instrument_from_db(self):
         self.thermo = ThermohygrometerModel.objects.get(id=self.thermohygrometer_id)
         return Instrument(self.thermo.ip_address)
 
@@ -144,6 +149,10 @@ class DataConsumer(AsyncWebsocketConsumer):
     def update_connection_status(self, status):
         ThermohygrometerModel.objects.filter(id=self.thermohygrometer_id).update(is_connected=status)
 
+    def correct_measures(self, data):
+        data['corrected_temperature'] = self.instrument.apply_correction(self.calibration_certificate, 'temperature', data['temperature'])
+        data['corrected_humidity'] = self.instrument.apply_correction(self.calibration_certificate, 'humidity', data['humidity'])
+        return data
 
 class ListenerConsumer(AsyncWebsocketConsumer):
     async def connect(self):
