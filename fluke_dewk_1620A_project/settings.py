@@ -146,3 +146,5 @@ CHANNEL_LAYERS = {
 
 LOGIN_URL = 'login'
 
+# Add this at the end of your settings file
+AUTO_CONNECT_ON_STARTUP = False  # Set to False if you want to disable auto-connect
