@@ -144,11 +144,17 @@ def data_visualization(request):
 
                 stats = data.aggregate(
                     min_temperature=Min('temperature'),
+                    corrected_min_temperature=Min('corrected_temperature'),
                     max_temperature=Max('temperature'),
+                    corrected_max_temperature=Max('corrected_temperature'),
                     avg_temperature=Avg('temperature'),
+                    corrected_avg_temperature=Avg('corrected_temperature'),
                     min_humidity=Min('humidity'),
+                    corrected_min_humidity=Min('corrected_humidity'),
                     max_humidity=Max('humidity'),
+                    corrected_max_humidity=Max('corrected_humidity'),
                     avg_humidity=Avg('humidity'),
+                    corrected_avg_humidity=Avg('corrected_humidity'),
                 )
             except ValueError:
                 # Handle invalid date format

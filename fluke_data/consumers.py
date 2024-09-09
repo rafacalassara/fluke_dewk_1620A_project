@@ -46,7 +46,7 @@ class DataConsumer(AsyncWebsocketConsumer):
                     await self.check_and_save_data(data)
             except Exception as e:
                 await self.broadcast_error(f'consumer.send_data_loop: {str(e)}')
-            await asyncio.sleep(1)
+            await asyncio.sleep(5)
 
     async def thermo_data(self, event):
         if 'error' in event:

@@ -10,8 +10,6 @@ body {
 }
 
 .container {
-    width: 80%;
-    max-width: 800px;
     margin: 20px;
     padding: 20px;
     background-color: #fff;
@@ -211,10 +209,6 @@ nav a:hover {
     min-width: 300px;
 }
 
-.form-group {
-    margin-bottom: 10px;
-}
-
 .export-section {
     display: flex;
     align-items: center;
@@ -234,6 +228,11 @@ nav a:hover {
     border: 1px solid #ccc;
     padding: 10px;
     border-radius: 5px;
+}
+
+.select-data-container {
+    display: flex;
+    justify-content: center;
 }
 
 .column {
@@ -314,6 +313,8 @@ th {
 
 .form-group {
     margin-bottom: 15px;
+    margin-right: 10px;
+    margin-left: 10px;
 }
 
 /* Label styles */
