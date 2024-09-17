@@ -70,3 +70,9 @@ class MeasuresModel(models.Model):
 class CustomUser(AbstractUser):
     name = models.CharField(max_length=100)
     is_manager = models.BooleanField(default=True)
+    
+    def save(self, *args, **kwargs):
+        # Set 'name' to the same value as 'username' before saving
+        if not self.name:
+            self.name = self.username
+        super().save(*args, **kwargs)
