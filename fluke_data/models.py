@@ -69,6 +69,4 @@ class MeasuresModel(models.Model):
 
 class CustomUser(AbstractUser):
     name = models.CharField(max_length=100)
-    is_manager = models.BooleanField(default=False)
-
-
+    is_manager = models.BooleanField(default=True)
