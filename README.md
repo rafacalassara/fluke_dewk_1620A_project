@@ -106,8 +106,3 @@ The project is organized as follows:
 - PyVISA: Ethernet communication with the Fluke DewK 1620A device
 - SQLite: Local data storage
 - Django: Web application framework
-
-## Acknowledgments
-
-- Fluke Corporation for the DewK 1620A Thermohygrometer
-- All contributors who have helped with the development of this project
