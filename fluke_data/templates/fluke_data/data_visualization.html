@@ -78,31 +78,37 @@
               <tr>
                 <th></th>
                 <th>NON CORRECTED</th>
-                <th>CORRECTED</th>
                 <th>NON CORRECTED</th>
+                <th>CORRECTED</th>
                 <th>CORRECTED</th>
               </tr>
             </thead>
             <tr>
               <td><strong>Min</strong></td>
-              <td>{{ stats.min_temperature|floatformat:2 }}</td>
-              <td>{{ stats.corrected_min_temperature|floatformat:2 }}</td>
-              <td>{{ stats.min_humidity|floatformat:2 }}</td>
-              <td>{{ stats.corrected_min_humidity|floatformat:2 }}</td>
+              <td>{{ stats.min_temperature|floatformat:1 }}</td>
+              <td>{{ stats.min_humidity|floatformat:0 }}</td>
+              {% if stats.corrected_min_temperature == 'No Calibration Certificate' %}
+                <td>{{ stats.corrected_min_temperature|floatformat:1 }}</td>
+                <td>{{ stats.corrected_min_humidity|floatformat:0 }}</td>
+              {% endif %}
             </tr>
             <tr>
               <td><strong>Max</strong></td>
-              <td>{{ stats.max_temperature|floatformat:2 }}</td>
-              <td>{{ stats.corrected_max_temperature|floatformat:2 }}</td>
-              <td>{{ stats.max_humidity|floatformat:2 }}</td>
-              <td>{{ stats.corrected_max_humidity|floatformat:2 }}</td>
+              <td>{{ stats.max_temperature|floatformat:1 }}</td>
+              <td>{{ stats.max_humidity|floatformat:0  }}</td>
+              {% if stats.corrected_max_temperature == 'No Calibration Certificate' %}
+                <td>{{ stats.corrected_max_temperature|floatformat:1 }}</td>
+                <td>{{ stats.corrected_max_humidity|floatformat:0  }}</td>
+              {% endif %}
             </tr>
             <tr>
               <td><strong>Avg</strong></td>
-              <td>{{ stats.avg_temperature|floatformat:2 }}</td>
-              <td>{{ stats.corrected_avg_temperature|floatformat:2 }}</td>
-              <td>{{ stats.avg_humidity|floatformat:2 }}</td>
-              <td>{{ stats.corrected_avg_humidity|floatformat:2 }}</td>
+              <td>{{ stats.avg_temperature|floatformat:1 }}</td>
+              <td>{{ stats.avg_humidity|floatformat:0 }}</td>
+              {% if stats.corrected_avg_temperature == 'No Calibration Certificate' %}
+                <td>{{ stats.corrected_avg_temperature|floatformat:1 }}</td>
+                <td>{{ stats.corrected_avg_humidity|floatformat:0 }}</td>
+              {% endif %}
             </tr>
           </table>
         </div>
@@ -121,8 +127,8 @@
               <tr>
                 <th></th>
                 <th>NON CORRECTED</th>
-                <th>CORRECTED</th>
                 <th>NON CORRECTED</th>
+                <th>CORRECTED</th>
                 <th>CORRECTED</th>
               </tr>
             </thead>
@@ -131,8 +137,8 @@
                 <tr>
                   <td>{{ measure.date|date:"d/m/Y H:i" }}</td>
                   <td>{{ measure.temperature }}</td>
-                  <td>{{ measure.corrected_temperature }}</td>
                   <td>{{ measure.humidity }}</td>
+                  <td>{{ measure.corrected_temperature }}</td>
                   <td>{{ measure.corrected_humidity }}</td>
                 </tr>
               {% endfor %}

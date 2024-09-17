@@ -142,20 +142,36 @@ def data_visualization(request):
                     date__range=[start_datetime, end_datetime]
                 ).order_by('-date')
 
-                stats = data.aggregate(
-                    min_temperature=Min('temperature'),
-                    corrected_min_temperature=Min('corrected_temperature'),
-                    max_temperature=Max('temperature'),
-                    corrected_max_temperature=Max('corrected_temperature'),
-                    avg_temperature=Avg('temperature'),
-                    corrected_avg_temperature=Avg('corrected_temperature'),
-                    min_humidity=Min('humidity'),
-                    corrected_min_humidity=Min('corrected_humidity'),
-                    max_humidity=Max('humidity'),
-                    corrected_max_humidity=Max('corrected_humidity'),
-                    avg_humidity=Avg('humidity'),
-                    corrected_avg_humidity=Avg('corrected_humidity'),
-                )
+                try:
+                    stats = data.aggregate(
+                        min_temperature=Min('temperature'),
+                        corrected_min_temperature=Min('corrected_temperature'),
+                        max_temperature=Max('temperature'),
+                        corrected_max_temperature=Max('corrected_temperature'),
+                        avg_temperature=Avg('temperature'),
+                        corrected_avg_temperature=Avg('corrected_temperature'),
+                        min_humidity=Min('humidity'),
+                        corrected_min_humidity=Min('corrected_humidity'),
+                        max_humidity=Max('humidity'),
+                        corrected_max_humidity=Max('corrected_humidity'),
+                        avg_humidity=Avg('humidity'),
+                        corrected_avg_humidity=Avg('corrected_humidity'),
+                    )
+                except:
+                    stats = data.aggregate(
+                        min_temperature=Min('temperature'),
+                        corrected_min_temperature='No Calibration Certificate',
+                        max_temperature=Max('temperature'),
+                        corrected_max_temperature='No Calibration Certificate',
+                        avg_temperature=Avg('temperature'),
+                        corrected_avg_temperature='No Calibration Certificate',
+                        min_humidity=Min('humidity'),
+                        corrected_min_humidity='No Calibration Certificate',
+                        max_humidity=Max('humidity'),
+                        corrected_max_humidity='No Calibration Certificate',
+                        avg_humidity=Avg('humidity'),
+                        corrected_avg_humidity='No Calibration Certificate',
+                    )
             except ValueError:
                 # Handle invalid date format
                 return render(request, 'fluke_data/data_visualization.html', {

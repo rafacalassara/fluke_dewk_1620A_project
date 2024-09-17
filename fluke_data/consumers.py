@@ -152,8 +152,13 @@ class DataConsumer(AsyncWebsocketConsumer):
         ThermohygrometerModel.objects.filter(id=self.thermohygrometer_id).update(is_connected=status)
 
     def correct_measures(self, data):
-        data['corrected_temperature'] = self.instrument.apply_correction(self.calibration_certificate, 'temperature', data['temperature'])
-        data['corrected_humidity'] = self.instrument.apply_correction(self.calibration_certificate, 'humidity', data['humidity'])
+        if self.calibration_certificate:    
+            data['corrected_temperature'] = self.instrument.apply_correction(self.calibration_certificate, 'temperature', data['temperature'])
+            data['corrected_humidity'] = self.instrument.apply_correction(self.calibration_certificate, 'humidity', data['humidity'])
+        else:
+            data['corrected_temperature'] = 'No Calibration Certificate',
+            data['corrected_humidity'] = 'No Calibration Certificate'
+            
         return data
 
 class ListenerConsumer(AsyncWebsocketConsumer):
