@@ -79,7 +79,12 @@ class UpdateUserForm(UserChangeForm):
 class ThermohygrometerForm(forms.ModelForm):
     class Meta:
         model = ThermohygrometerModel
-        fields = ['instrument_name', 'ip_address', 'time_interval_to_save_measures', 'pn', 'sn', 'sensor_sn', 'sensor_pn', 'group_name']
+        fields = [
+            'instrument_name', 'ip_address', 
+            'time_interval_to_save_measures',
+            'pn', 'sn', 'sensor_sn', 'sensor_pn',
+            'group_name', 'calibration_certificate'
+        ]
         widgets = {
             'instrument_name': forms.TextInput(attrs={'class': 'form-control'}),
             'ip_address': forms.TextInput(attrs={'class': 'form-control'}),
@@ -89,4 +94,5 @@ class ThermohygrometerForm(forms.ModelForm):
             'sensor_sn': forms.TextInput(attrs={'class': 'form-control'}),
             'sensor_pn': forms.TextInput(attrs={'class': 'form-control'}),
             'group_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'calibration_certificate': forms.TextInput(attrs={'class': 'form-control'}),
         }

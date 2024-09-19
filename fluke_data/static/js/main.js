@@ -67,7 +67,7 @@ async function addThermohygrometer() {
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.error) {
-                resultDiv.innerHTML += `<p>Error: ${data.error}</p>`;
+                console.log(data.error);
             } else if (!data.data || typeof data.data.temperature === 'undefined' || typeof data.data.humidity === 'undefined') {
                 console.log(`Data missing for ${selectedInstrumentName}.`);
             } else {

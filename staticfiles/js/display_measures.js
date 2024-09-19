@@ -40,8 +40,23 @@ document.addEventListener('DOMContentLoaded', async function() {
             const dataContainer = document.getElementById(`data-${thermohygrometerId}`);
             if (data.date && data.temperature && data.humidity) {
                 dataContainer.innerHTML = `
-                    <p><strong>Temperature:</strong> ${data.temperature} °C</p>
-                    <p><strong>Humidity:</strong> ${data.humidity} %</p>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Non Corrected</th>
+                            <th>Corrected</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Temperature</strong></td>
+                            <td>${data.temperature} °C</td>
+                            <td>${data.corrected_temperature} °C</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Humidity</strong></td>
+                            <td>${data.humidity} %</td>
+                            <td>${data.corrected_humidity} %</td>
+                        </tr>
+                    </table>
                     ${data.date ? `<p><strong>Instrument Date:</strong> ${data.date}</p>` : ''}
                 `;
             } else {

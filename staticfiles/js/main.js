@@ -72,8 +72,23 @@ async function addThermohygrometer() {
                 console.log(`Data missing for ${selectedInstrumentName}.`);
             } else {
                 let formattedData = `
-                    <p><strong>Temperature:</strong> ${data.data.temperature} °C</p>
-                    <p><strong>Humidity:</strong> ${data.data.humidity} %</p>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <th>Non Corrected</th>
+                            <th>Corrected</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Temperature</strong></td>
+                            <td>${data.data.temperature} °C</td>
+                            <td>${data.data.corrected_temperature} °C</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Humidity</strong></td>
+                            <td>${data.data.humidity} %</td>
+                            <td>${data.data.corrected_humidity} %</td>
+                        </tr>
+                    </table>
                 `;
                 if (data.data.date) {
                     formattedData += `<p><strong>Instrument Date:</strong> ${data.data.date}</p>`;

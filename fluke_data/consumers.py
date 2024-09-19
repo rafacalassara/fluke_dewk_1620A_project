@@ -67,7 +67,10 @@ class DataConsumer(AsyncWebsocketConsumer):
         self.running = True
 
     def set_calibration_info(self):
-        self.calibration_certificate = CalibrationCertificateModel.objects.get(id=self.thermo.calibration_certificate.id)
+        try:
+            self.calibration_certificate = CalibrationCertificateModel.objects.get(id=self.thermo.calibration_certificate.id)
+        except AttributeError:
+            self.calibration_certificate = None
 
     async def add_to_group(self):
         await self.channel_layer.group_add(
