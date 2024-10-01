@@ -80,10 +80,12 @@ class ThermohygrometerForm(forms.ModelForm):
     class Meta:
         model = ThermohygrometerModel
         fields = [
-            'instrument_name', 'ip_address', 
+            'instrument_name', 'ip_address',
             'time_interval_to_save_measures',
             'pn', 'sn', 'sensor_sn', 'sensor_pn',
-            'group_name', 'calibration_certificate'
+            'group_name', 'calibration_certificate',
+            'min_temperature', 'max_temperature',
+            'min_humidity', 'max_humidity',
         ]
         widgets = {
             'instrument_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -95,4 +97,8 @@ class ThermohygrometerForm(forms.ModelForm):
             'sensor_pn': forms.TextInput(attrs={'class': 'form-control'}),
             'group_name': forms.TextInput(attrs={'class': 'form-control'}),
             'calibration_certificate': forms.TextInput(attrs={'class': 'form-control'}),
+            'min_temperature': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Min Temperature (°C)'}),
+            'max_temperature': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Max Temperature (°C)'}),
+            'min_humidity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Min Humidity (%)'}),
+            'max_humidity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Max Humidity (%)'}),
         }

@@ -71,6 +71,26 @@ async function addThermohygrometer() {
             } else if (!data.data || typeof data.data.temperature === 'undefined' || typeof data.data.humidity === 'undefined') {
                 console.log(`Data missing for ${selectedInstrumentName}.`);
             } else {
+                // Get temperature and humidity values
+                const temperature = data.data.temperature;
+                const correctedTemperature = data.data.corrected_temperature;
+                const humidity = data.data.humidity;
+                const correctedHumidity = data.data.corrected_humidity;
+
+                // Retrieve limits, using a fallback value if they are not defined in the database
+                // console.log(typeof data.data.thermo_info.min_humidity);
+                const minTemperature = data.data.thermo_info.min_temperature !== null ? data.data.thermo_info.min_temperature : -Infinity;
+                const maxTemperature = data.data.thermo_info.max_temperature !== null ? data.data.thermo_info.max_temperature : Infinity;
+                const minHumidity = data.data.thermo_info.min_humidity !== null ? data.data.thermo_info.min_humidity : -Infinity;
+                const maxHumidity = data.data.thermo_info.max_humidity !== null ? data.data.thermo_info.max_humidity : Infinity;
+
+                // Check if temperature or humidity are outside of the acceptable range
+                const temperatureStyle = (temperature < minTemperature || temperature > maxTemperature) ? 'color: red;' : 'color: black;';
+                const correctedTemperatureStyle = (correctedTemperature < minTemperature || correctedTemperature > maxTemperature) ? 'color: red;' : 'color: black;';
+                const humidityStyle = (humidity < minHumidity || humidity > maxHumidity) ? 'color: red;' : 'color: black;';
+                const correctedHumidityStyle = (correctedHumidity < minHumidity || correctedHumidity > maxHumidity) ? 'color: red;' : 'color: black;';
+
+
                 let formattedData = `
                     <table>
                         <tr>
@@ -80,22 +100,29 @@ async function addThermohygrometer() {
                         </tr>
                         <tr>
                             <td><strong>Temperature</strong></td>
-                            <td>${data.data.temperature} °C</td>
-                            <td>${data.data.corrected_temperature} °C</td>
+                            <td style="${temperatureStyle}">${temperature} °C</td>
+                            <td style="${correctedTemperatureStyle}">${correctedTemperature} °C</td>
                         </tr>
                         <tr>
                             <td><strong>Humidity</strong></td>
-                            <td>${data.data.humidity} %</td>
-                            <td>${data.data.corrected_humidity} %</td>
+                            <td style="${humidityStyle}">${humidity} %</td>
+                            <td style="${correctedHumidityStyle}">${correctedHumidity} %</td>
                         </tr>
                     </table>
                 `;
+
                 if (data.data.date) {
                     formattedData += `<p><strong>Instrument Date:</strong> ${data.data.date}</p>`;
                 }
+
                 formattedData += `<button onclick="closeConnection('${selectedThermohygrometer}')">Close Connection</button>`;
 
+                // Update the resultDiv with new data and styles
                 resultDiv.innerHTML = resultHeader.outerHTML + resultSubHeader.outerHTML + formattedData;
+
+                // If limits are available, display them in the console (for debug purposes)
+                // console.log(`Temperature limits: Min = ${minTemperature}, Max = ${maxTemperature}`);
+                // console.log(`Humidity limits: Min = ${minHumidity}, Max = ${maxHumidity}`);
             }
         };
 

@@ -46,6 +46,12 @@ class ThermohygrometerModel(models.Model):
     last_connection_attempt = models.DateTimeField(null=True, blank=True)
     calibration_certificate = models.ForeignKey(CalibrationCertificateModel, on_delete=models.SET_NULL, null=True)
 
+    # New Fields for Measure Limits
+    min_temperature = models.FloatField(null=True, blank=True, help_text="Minimum acceptable temperature value")
+    max_temperature = models.FloatField(null=True, blank=True, help_text="Maximum acceptable temperature value")
+    min_humidity = models.FloatField(null=True, blank=True, help_text="Minimum acceptable humidity value")
+    max_humidity = models.FloatField(null=True, blank=True, help_text="Maximum acceptable humidity value")
+
     def __str__(self):
         return f"{self.instrument_name} (PN: {self.pn}, SN: {self.sn})"
     

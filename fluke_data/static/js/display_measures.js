@@ -48,13 +48,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                         </tr>
                         <tr>
                             <td><strong>Temperature</strong></td>
-                            <td>${data.temperature} °C</td>
-                            <td>${data.corrected_temperature} °C</td>
+                            <td style="color: ${data.temperature_style};">${data.temperature} °C</td>
+                            <td style="color: ${data.corrected_temperature_style};">${data.corrected_temperature} °C</td>
                         </tr>
                         <tr>
                             <td><strong>Humidity</strong></td>
-                            <td>${data.humidity} %</td>
-                            <td>${data.corrected_humidity} %</td>
+                            <td style="color: ${data.humidity_style};">${data.humidity} %</td>
+                            <td style="color: ${data.corrected_humidity_style};">${data.corrected_humidity} %</td>
                         </tr>
                     </table>
                     ${data.date ? `<p><strong>Instrument Date:</strong> ${data.date}</p>` : ''}
