@@ -133,15 +133,15 @@ class Thermohygrometer:
 
         if measurement_type == 'temperature':
             points = [
-                (Thermohygrometer.replace_comma(calibration_certificate.temp_point_1), Thermohygrometer.replace_comma(calibration_certificate.temp_correction_1)),
-                (Thermohygrometer.replace_comma(calibration_certificate.temp_point_2), Thermohygrometer.replace_comma(calibration_certificate.temp_correction_2)),
-                (Thermohygrometer.replace_comma(calibration_certificate.temp_point_3), Thermohygrometer.replace_comma(calibration_certificate.temp_correction_3)),
+                (Thermohygrometer.replace_comma(calibration_certificate.temp_indication_point_1), Thermohygrometer.replace_comma(calibration_certificate.temp_correction_1)),
+                (Thermohygrometer.replace_comma(calibration_certificate.temp_indication_point_2), Thermohygrometer.replace_comma(calibration_certificate.temp_correction_2)),
+                (Thermohygrometer.replace_comma(calibration_certificate.temp_indication_point_3), Thermohygrometer.replace_comma(calibration_certificate.temp_correction_3)),
             ]
         elif measurement_type == 'humidity':
             points = [
-                (Thermohygrometer.replace_comma(calibration_certificate.humidity_point_1), Thermohygrometer.replace_comma(calibration_certificate.humidity_correction_1)),
-                (Thermohygrometer.replace_comma(calibration_certificate.humidity_point_2), Thermohygrometer.replace_comma(calibration_certificate.humidity_correction_2)),
-                (Thermohygrometer.replace_comma(calibration_certificate.humidity_point_3), Thermohygrometer.replace_comma(calibration_certificate.humidity_correction_3)),
+                (Thermohygrometer.replace_comma(calibration_certificate.humidity_indication_point_1), Thermohygrometer.replace_comma(calibration_certificate.humidity_correction_1)),
+                (Thermohygrometer.replace_comma(calibration_certificate.humidity_indication_point_2), Thermohygrometer.replace_comma(calibration_certificate.humidity_correction_2)),
+                (Thermohygrometer.replace_comma(calibration_certificate.humidity_indication_point_3), Thermohygrometer.replace_comma(calibration_certificate.humidity_correction_3)),
             ]
         else:
             raise ValueError("measurement_type must be 'temperature' or 'humidity'")

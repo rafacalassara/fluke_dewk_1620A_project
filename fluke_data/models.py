@@ -8,19 +8,19 @@ class CalibrationCertificateModel(models.Model):
     certificate_number = models.CharField(max_length=100)
 
     # Temperature calibration points
-    temp_point_1 = models.FloatField()
+    temp_indication_point_1 = models.FloatField()
     temp_correction_1 = models.FloatField()
-    temp_point_2 = models.FloatField()
+    temp_indication_point_2 = models.FloatField()
     temp_correction_2 = models.FloatField()
-    temp_point_3 = models.FloatField()
+    temp_indication_point_3 = models.FloatField()
     temp_correction_3 = models.FloatField()
 
     # Humidity calibration points
-    humidity_point_1 = models.FloatField()
+    humidity_indication_point_1 = models.FloatField()
     humidity_correction_1 = models.FloatField()
-    humidity_point_2 = models.FloatField()
+    humidity_indication_point_2 = models.FloatField()
     humidity_correction_2 = models.FloatField()
-    humidity_point_3 = models.FloatField()
+    humidity_indication_point_3 = models.FloatField()
     humidity_correction_3 = models.FloatField()
 
     # Uncertainty values
