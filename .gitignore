@@ -81,6 +81,7 @@ coverage.xml
 
 # Jupyter Notebook 
 .ipynb_checkpoints 
+*.ipynb
 
 # pyenv 
 .python-version 
@@ -130,3 +131,6 @@ GitHub.sublime-settings
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
+# CSV
+*.csv

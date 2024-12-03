@@ -217,10 +217,10 @@ def export_to_csv(request):
         response['Content-Disposition'] = f'attachment; filename="measured_data_{selected_instrument.instrument_name}_{start_date}_{end_date}.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(['Date', 'Temperature (°C)', 'Humidity (%)'])
+        writer.writerow(['Date', 'Temperature (°C)','Corrected Temperature (°C)', 'Humidity (%)', 'Corrected Humidity (%)' ])
 
         for measure in data:
-            writer.writerow([measure.date.strftime("%d/%m/%Y %H:%M"), measure.temperature, measure.humidity])
+            writer.writerow([measure.date.strftime("%d/%m/%Y %H:%M"), measure.temperature, measure.corrected_temperature, measure.humidity, measure.corrected_humidity])
 
         return response
 
