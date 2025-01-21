@@ -1,15 +1,17 @@
 # fluke_data/views.py
+from collections import defaultdict
 import json, csv
-from datetime import datetime
+from datetime import datetime, time, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Min, Max, Avg
+from django.db.models import Min, Max, Avg, F, Q
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.hashers import make_password
+from django.utils.timezone import make_aware
 
 from .forms import *
 from .models import *
@@ -298,3 +300,116 @@ def login_view(request):
         form = CustomLoginForm()
 
     return render(request, 'fluke_data/login.html', {'form': form})
+
+
+def intelligence2(request):
+    # Buscar dados
+    measures = MeasuresModel.objects.all().values(
+        'id', 'temperature', 'humidity', 'date', 
+        'instrument_id', 'corrected_temperature', 
+        'corrected_humidity'
+    )
+    
+    instruments = ThermohygrometerModel.objects.all().values(
+        'id', 'instrument_name', 'group_name'
+    )
+    
+    # Converter para JSON
+    measures_json = json.dumps(list(measures), default=str)
+    
+    return render(request, 'fluke_data/intelligence2.html', {
+        'measures': measures_json,
+        'instruments': instruments,
+    })
+
+def out_of_limits_chart(request):
+    form = AnalysisPeriodForm(request.GET or None)
+    data = []
+    total_time_available = 0
+    analysis_period = ""
+    temperature_data = defaultdict(list)  # Armazena dados de temperatura por instrumento
+    humidity_data = defaultdict(list)    # Armazena dados de umidade por instrumento
+    timestamps = set()                   # Conjunto para armazenar timestamps únicos
+
+    if form.is_valid():
+        start_date = form.cleaned_data['start_date']
+        end_date = form.cleaned_data['end_date']
+        start_time = form.cleaned_data['start_time']
+        end_time = form.cleaned_data['end_time']
+
+        start_datetime = datetime.combine(start_date, start_time)
+        end_datetime = datetime.combine(end_date, end_time)
+
+        analysis_period = f"{start_date.strftime('%d/%m/%Y')} {start_time.strftime('%H:%M')} - {end_date.strftime('%d/%m/%Y')} {end_time.strftime('%H:%M')}"
+
+        delta_days = (end_date - start_date).days + 1
+        weekdays = [
+            start_date + timedelta(days=i) for i in range(delta_days)
+            if (start_date + timedelta(days=i)).weekday() < 5  # Segunda a sexta-feira
+        ]
+        total_time_available = len(weekdays) * ((end_time.hour - start_time.hour) + (end_time.minute - start_time.minute) / 60)
+
+        instruments = ThermohygrometerModel.objects.all()
+
+        for instrument in instruments:
+            measures = MeasuresModel.objects.filter(
+                instrument=instrument,
+                date__range=(start_datetime, end_datetime),
+                date__week_day__gte=2,  # Segunda (Django usa 2)
+                date__week_day__lte=6,  # Sexta
+                date__time__gte=start_time,
+                date__time__lte=end_time
+            ).order_by('date')
+
+            temp_out = measures.filter(
+                corrected_temperature__isnull=False
+            ).filter(
+                Q(corrected_temperature__lt=instrument.min_temperature) |
+                Q(corrected_temperature__gt=instrument.max_temperature)
+            ).count()
+            
+            humidity_out = measures.filter(
+                corrected_humidity__isnull=False
+            ).filter(
+                Q(corrected_humidity__lt=instrument.min_humidity) |
+                Q(corrected_humidity__gt=instrument.max_humidity)
+            ).count()
+
+            total_time_out = ((temp_out + humidity_out) * instrument.time_interval_to_save_measures) / 60
+            percent_out_of_limits = (total_time_out / total_time_available) * 100 if total_time_available > 0 else 0
+
+            data.append({
+                'instrument_name': instrument.instrument_name,
+                'percent_out_of_limits': percent_out_of_limits,
+            })
+
+            # Organizar dados para gráficos de linha
+            for measure in measures:
+                timestamp = measure.date.strftime('%Y-%m-%d %H:%M')
+                # Adiciona timestamp à lista
+                timestamps.add(timestamp)
+                
+                # Adiciona temperatura apenas se não for nula
+                if measure.corrected_temperature is not None:
+                    temperature_data[instrument.instrument_name].append({
+                        'timestamp': timestamp,
+                        'value': measure.corrected_temperature
+                    })
+                
+                # Adiciona umidade apenas se não for nula
+                if measure.corrected_humidity is not None:
+                    humidity_data[instrument.instrument_name].append({
+                        'timestamp': timestamp,
+                        'value': measure.corrected_humidity
+                    })
+
+    context = {
+        'form': form,
+        'data': data,
+        'total_time_available': total_time_available,
+        'analysis_period': analysis_period,
+        'temperature_data': dict(temperature_data),
+        'humidity_data': dict(humidity_data),
+        'timestamps': sorted(timestamps)  # Lista de timestamps ordenados
+    }
+    return render(request, 'fluke_data/intelligence.html', context)

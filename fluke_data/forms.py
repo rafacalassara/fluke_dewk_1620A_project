@@ -102,3 +102,11 @@ class ThermohygrometerForm(forms.ModelForm):
             'min_humidity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Min Humidity (%)'}),
             'max_humidity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Max Humidity (%)'}),
         }
+
+
+class AnalysisPeriodForm(forms.Form):
+    start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Data inicial")
+    end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Data final")
+    start_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora inicial")
+    end_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora final")
+    

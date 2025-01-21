@@ -1,0 +1,386 @@
+<!-- templates\fluke_data\intelligence.html -->
+{% extends "fluke_data/base.html" %}
+{% block title %}Intelligence{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="filter-container">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="instrument">Instrumento:</label>
+                <select id="instrument">
+                    <option value="all">Todos os Instrumentos</option>
+                    {% for instrument in instruments %}
+                    <option value="{{ instrument.id }}">{{ instrument.instrument_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="start_date">Data Início:</label>
+                <input type="date" id="start_date">
+            </div>
+            <div class="filter-group">
+                <label for="end_date">Data Fim:</label>
+                <input type="date" id="end_date">
+            </div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="start_hour">Hora Início:</label>
+                <select id="start_hour">
+                    {% for i in ""|ljust:"24" %}
+                    <option value="{{ forloop.counter0 }}">{{ forloop.counter0|stringformat:"02d" }}:00</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="end_hour">Hora Fim:</label>
+                <select id="end_hour">
+                    {% for i in ""|ljust:"24" %}
+                    <option value="{{ forloop.counter0 }}">{{ forloop.counter0|stringformat:"02d" }}:00</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button onclick="updateCharts()" style="padding: 8px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Atualizar Gráficos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">Temperatura e Umidade ao Longo do Tempo</div>
+        <canvas id="lineChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">Média Diária de Temperatura e Umidade</div>
+        <canvas id="barChart"></canvas>
+    </div>
+
+</div>
+
+<style>
+    .dashboard-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .filter-container {
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .filter-group label {
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .chart-container {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        height: 400px;  /* Adicione esta linha */
+        position: relative;  /* importante para o posicionamento do canvas */
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .chart-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+    }
+    select, input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 100%;
+    }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+<script>
+    let lineChart = null;
+    let barChart = null;
+    let tempHeatmap = null;
+    let humidHeatmap = null;
+    const measures = {{ measures|safe }};
+
+    function filterData() {
+        const instrumentSelect = document.getElementById('instrument');
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        const startHour = parseInt(document.getElementById('start_hour').value);
+        const endHour = parseInt(document.getElementById('end_hour').value);
+
+        return measures.filter(measure => {
+            const measureDate = new Date(measure.date);
+            const hour = measureDate.getHours();
+            
+            const isInTimeRange = hour >= startHour && hour <= endHour;
+            const isInDateRange = (!startDate || measureDate >= new Date(startDate)) && 
+                                (!endDate || measureDate <= new Date(endDate));
+            const isInstrumentMatch = instrumentSelect.value === 'all' || 
+                                    measure.instrument_id === parseInt(instrumentSelect.value);
+            
+            return isInTimeRange && isInDateRange && isInstrumentMatch;
+        });
+    }
+
+    function calculateDailyAverages(filteredData) {
+        const dailyData = {};
+        
+        filteredData.forEach(measure => {
+            const date = moment(measure.date).format('YYYY-MM-DD');
+            if (!dailyData[date]) {
+                dailyData[date] = {
+                    temp: [],
+                    humid: []
+                };
+            }
+            dailyData[date].temp.push(measure.temperature);
+            dailyData[date].humid.push(measure.humidity);
+        });
+
+        const result = {
+            dates: [],
+            tempAvg: [],
+            humidAvg: [],
+            tempStdDev: [],
+            humidStdDev: []
+        };
+
+        Object.entries(dailyData).forEach(([date, data]) => {
+            result.dates.push(moment(date).format('DD/MM/YY'));
+            result.tempAvg.push(calculateAverage(data.temp));
+            result.humidAvg.push(calculateAverage(data.humid));
+            result.tempStdDev.push(calculateStdDev(data.temp));
+            result.humidStdDev.push(calculateStdDev(data.humid));
+        });
+
+        return result;
+    }
+
+    function calculateAverage(arr) {
+        return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    }
+
+    function calculateStdDev(arr) {
+        if (arr.length === 0) return 0;
+        const avg = calculateAverage(arr);
+        const squareDiffs = arr.map(value => Math.pow(value - avg, 2));
+        const avgSquareDiff = calculateAverage(squareDiffs);
+        return Math.sqrt(avgSquareDiff);
+    }
+
+    function updateCharts() {
+        const filteredData = filterData();
+
+        const dailyAverages = calculateDailyAverages(filteredData);
+
+        // Destruir gráficos existentes com verificação
+        if (lineChart) {
+            lineChart.destroy();
+            lineChart = null;
+        }
+        if (barChart) {
+            barChart.destroy();
+            barChart = null;
+        }
+
+        // Atualizar gráfico de linha
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        lineChart = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: filteredData.map(d => moment(d.date).format('DD/MM/YY HH:mm')),
+                datasets: [{
+                    label: 'Temperatura (°C)',
+                    data: filteredData.map(d => d.temperature),
+                    borderColor: '#ff7300',
+                    yAxisID: 'y-temp',
+                }, {
+                    label: 'Umidade (%)',
+                    data: filteredData.map(d => d.humidity),
+                    borderColor: '#387908',
+                    yAxisID: 'y-humid',
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    'y-temp': {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Temperatura (°C)'
+                        }
+                    },
+                    'y-humid': {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Umidade (%)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // Atualizar gráfico de barras
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        barChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: dailyAverages.dates,
+                datasets: [
+                    {
+                        label: 'Temperatura Média (°C)',
+                        data: dailyAverages.tempAvg,
+                        backgroundColor: 'rgba(255, 115, 0, 0.5)',
+                        borderColor: '#ff7300',
+                        borderWidth: 1,
+                        yAxisID: 'y-temp',
+                        order: 1
+                    },
+                    {
+                        label: 'Temperatura Desvio Padrão',
+                        data: dailyAverages.tempStdDev,
+                        type: 'line',
+                        borderColor: 'rgba(255, 115, 0, 0.8)',
+                        borderDash: [5, 5],
+                        fill: false,
+                        yAxisID: 'y-temp-std',
+                        order: 0
+                    },
+                    {
+                        label: 'Umidade Média (%)',
+                        data: dailyAverages.humidAvg,
+                        backgroundColor: 'rgba(56, 121, 8, 0.5)',
+                        borderColor: '#387908',
+                        borderWidth: 1,
+                        yAxisID: 'y-humid',
+                        order: 1
+                    },
+                    {
+                        label: 'Umidade Desvio Padrão',
+                        data: dailyAverages.humidStdDev,
+                        type: 'line',
+                        borderColor: 'rgba(56, 121, 8, 0.8)',
+                        borderDash: [5, 5],
+                        fill: false,
+                        yAxisID: 'y-humid-std',
+                        order: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    'y-temp': {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Temperatura (°C)'
+                        },
+                        beginAtZero: false
+                    },
+                    'y-temp-std': {
+                        type: 'linear',
+                        position: 'left',
+                        display: false, // Oculta a escala de desvio padrão
+                        min: 0 // Previne limites negativos
+                    },
+                    'y-humid': {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Umidade (%)'
+                        },
+                        beginAtZero: false
+                    },
+                    'y-humid-std': {
+                        type: 'linear',
+                        position: 'right',
+                        display: false, // Oculta a escala de desvio padrão
+                        min: 0 // Previne limites negativos
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    },
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true // Melhora a exibição das legendas
+                        }
+                    }
+                }
+            }
+        });
+    }
+       
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar se os canvas existem
+        const canvases = ['lineChart', 'barChart'];
+        const missingCanvases = canvases.filter(id => !document.getElementById(id));
+        
+        if (missingCanvases.length > 0) {
+            console.error('Missing canvas elements:', missingCanvases);
+            return;
+        }
+    
+        // Inicializar data atual
+        const today = new Date();
+        document.getElementById('start_date').value = today.toISOString().split('T')[0];
+        document.getElementById('end_date').value = today.toISOString().split('T')[0];
+        document.getElementById('start_hour').value = "8";
+        document.getElementById('end_hour').value = "16";
+    
+        // Carregar gráficos iniciais
+        updateCharts();
+    });
+</script>
+
+{% endblock %}
+

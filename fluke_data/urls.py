@@ -18,4 +18,6 @@ urlpatterns = [
     path('update_user/<int:user_id>/', views.update_user, name='update_user'),
     path('delete_user/<int:user_id>/', views.delete_user, name='delete_user'),
     path('login/', views.login_view, name='login'),
+    path('intelligence/', views.out_of_limits_chart, name='intelligence'),
+    path('intelligence2/', views.intelligence2, name='intelligence2')
 ]
