@@ -13,6 +13,7 @@
                     <th>Instrument Name</th>
                     <th>PN</th>
                     <th>SN</th>
+                    <th>Current Certificate</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -23,8 +24,16 @@
                     <td>{{ thermo.pn }}</td>
                     <td>{{ thermo.sn }}</td>
                     <td>
+                        {% if thermo.calibration_certificate %}
+                            {{ thermo.calibration_certificate.certificate_number }}
+                            (Valid until: {{ thermo.calibration_certificate.next_calibration_date }})
+                        {% else %}
+                            No certificate
+                        {% endif %}
+                    </td>
+                    <td>
                         <a href="{% url 'update_thermohygrometer' thermo.pk %}" class="btn btn-primary btn-sm">Edit</a>
-                        <button onclick="deleteThermohygrometer({{ thermo.id }})" class=" btn btn-danger">Delete</button>
+                        <button onclick="deleteThermohygrometer({{ thermo.id }})" class="btn btn-danger">Delete</button>
                     </td>
                 </tr>
                 {% endfor %}

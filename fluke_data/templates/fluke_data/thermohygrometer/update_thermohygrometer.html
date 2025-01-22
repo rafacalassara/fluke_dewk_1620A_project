@@ -1,11 +1,80 @@
 {% extends "fluke_data/base.html" %}
 {% block title %}Update Thermohygrometer{% endblock %}
+
 {% block content %}
-<h2>Update Thermohygrometer</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Update</button>
-    <a href="{% url 'manage_thermohygrometers' %}" class="btn btn-secondary">Cancel</a>
-</form>
+<div class="container">
+    <h2>Update Thermohygrometer</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <h3>Basic Information</h3>
+            {{ form.instrument_name.label_tag }}
+            {{ form.instrument_name }}
+            
+            {{ form.ip_address.label_tag }}
+            {{ form.ip_address }}
+            
+            {{ form.time_interval_to_save_measures.label_tag }}
+            {{ form.time_interval_to_save_measures }}
+        </div>
+
+        <div class="form-group">
+            <h3>Device Details</h3>
+            {{ form.pn.label_tag }}
+            {{ form.pn }}
+            
+            {{ form.sn.label_tag }}
+            {{ form.sn }}
+            
+            {{ form.sensor_sn.label_tag }}
+            {{ form.sensor_sn }}
+            
+            {{ form.sensor_pn.label_tag }}
+            {{ form.sensor_pn }}
+            
+            {{ form.group_name.label_tag }}
+            {{ form.group_name }}
+        </div>
+
+        <div class="form-group">
+            <h3>Calibration Certificate</h3>
+            {{ form.calibration_certificate.label_tag }}
+            {{ form.calibration_certificate }}
+        </div>
+
+        <div class="form-group">
+            <h3>Measurement Limits</h3>
+            {{ form.min_temperature.label_tag }}
+            {{ form.min_temperature }}
+            
+            {{ form.max_temperature.label_tag }}
+            {{ form.max_temperature }}
+            
+            {{ form.min_humidity.label_tag }}
+            {{ form.min_humidity }}
+            
+            {{ form.max_humidity.label_tag }}
+            {{ form.max_humidity }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="{% url 'manage_thermohygrometers' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-group {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
 {% endblock %}

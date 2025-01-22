@@ -19,5 +19,10 @@ urlpatterns = [
     path('delete_user/<int:user_id>/', views.delete_user, name='delete_user'),
     path('login/', views.login_view, name='login'),
     path('intelligence/', views.out_of_limits_chart, name='intelligence'),
-    path('intelligence2/', views.intelligence2, name='intelligence2')
+    path('intelligence2/', views.intelligence2, name='intelligence2'),
+    
+    # Update certificate URLs to simpler paths
+    path('certificates/delete/<int:cert_pk>/', views.delete_certificate, name='delete_certificate'),
+    path('manage_certificates/', views.manage_all_certificates, name='manage_all_certificates'),
+    path('certificates/create/', views.create_certificate, name='create_certificate'),
 ]

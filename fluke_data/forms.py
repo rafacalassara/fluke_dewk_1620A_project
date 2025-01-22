@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm, PasswordChangeForm
-from .models import ThermohygrometerModel
+from .models import ThermohygrometerModel, CalibrationCertificateModel
 
 User = get_user_model()
 
@@ -77,6 +77,20 @@ class UpdateUserForm(UserChangeForm):
         return cleaned_data
 
 class ThermohygrometerForm(forms.ModelForm):
+    calibration_certificate = forms.ModelChoiceField(
+        queryset=CalibrationCertificateModel.objects.all(),
+        required=False,
+        empty_label="No certificate",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Certificate",
+        to_field_name="id"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Customize the certificate choices to show certificate number
+        self.fields['calibration_certificate'].label_from_instance = lambda obj: obj.certificate_number
+
     class Meta:
         model = ThermohygrometerModel
         fields = [
@@ -103,10 +117,50 @@ class ThermohygrometerForm(forms.ModelForm):
             'max_humidity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Max Humidity (%)'}),
         }
 
+class CalibrationCertificateForm(forms.ModelForm):
+    class Meta:
+        model = CalibrationCertificateModel
+        fields = [
+            'certificate_number',
+            'calibration_date',
+            'next_calibration_date',
+            'temp_indication_point_1',
+            'temp_correction_1',
+            'temp_indication_point_2',
+            'temp_correction_2',
+            'temp_indication_point_3',
+            'temp_correction_3',
+            'humidity_indication_point_1',
+            'humidity_correction_1',
+            'humidity_indication_point_2',
+            'humidity_correction_2',
+            'humidity_indication_point_3',
+            'humidity_correction_3',
+            'temp_uncertainty',
+            'humidity_uncertainty',
+        ]
+        widgets = {
+            'certificate_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'calibration_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'next_calibration_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'temp_indication_point_1': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'temp_correction_1': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'temp_indication_point_2': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'temp_correction_2': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'temp_indication_point_3': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'temp_correction_3': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'humidity_indication_point_1': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'humidity_correction_1': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'humidity_indication_point_2': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'humidity_correction_2': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'humidity_indication_point_3': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'humidity_correction_3': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'temp_uncertainty': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+            'humidity_uncertainty': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
+        }
 
 class AnalysisPeriodForm(forms.Form):
     start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Data inicial")
     end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Data final")
     start_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora inicial")
     end_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora final")
-    

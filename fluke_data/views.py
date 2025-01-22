@@ -413,3 +413,52 @@ def out_of_limits_chart(request):
         'timestamps': sorted(timestamps)  # Lista de timestamps ordenados
     }
     return render(request, 'fluke_data/intelligence.html', context)
+
+@login_required
+@user_passes_test(is_manager)
+def delete_certificate(request, cert_pk):
+    certificate = get_object_or_404(CalibrationCertificateModel, pk=cert_pk)
+    thermohygrometer = ThermohygrometerModel.objects.filter(calibration_certificate=certificate).first()
+    
+    if thermohygrometer:
+        thermohygrometer.calibration_certificate = None
+        thermohygrometer.save()
+    
+    certificate.delete()
+    messages.success(request, 'Certificate deleted successfully.')
+    return redirect('manage_thermohygrometers')
+
+@login_required
+@user_passes_test(is_manager)
+def manage_all_certificates(request):
+    certificates = CalibrationCertificateModel.objects.all().order_by('-calibration_date')
+    
+    if request.method == 'POST':
+        form = CalibrationCertificateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Certificate added successfully.')
+            return redirect('manage_all_certificates')
+    else:
+        form = CalibrationCertificateForm()
+    
+    return render(request, 'fluke_data/certificate/manage_all_certificates.html', {
+        'certificates': certificates,
+        'form': form
+    })
+
+@login_required
+@user_passes_test(is_manager)
+def create_certificate(request):
+    if request.method == 'POST':
+        form = CalibrationCertificateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Certificate created successfully.')
+            return redirect('manage_all_certificates')
+    else:
+        form = CalibrationCertificateForm()
+    
+    return render(request, 'fluke_data/certificate/create_certificate.html', {
+        'form': form
+    })

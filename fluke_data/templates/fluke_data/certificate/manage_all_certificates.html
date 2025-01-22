@@ -1,0 +1,62 @@
+{% extends "fluke_data/base.html" %}
+
+{% block title %}Manage Certificates{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-actions" style="padding-bottom: 20px;">
+        <h2>Manage Calibration Certificates</h2>
+        <a href="{% url 'create_certificate' %}" class="btn btn-primary">Create New Certificate</a>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Certificate Number</th>
+                    <th>Calibration Date</th>
+                    <th>Next Calibration</th>
+                    <th>Associated Instrument</th>
+                    <th>Temperature Points</th>
+                    <th>Humidity Points</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cert in certificates %}
+                <tr id="cert-{{ cert.id }}">
+                    <td>{{ cert.certificate_number }}</td>
+                    <td>{{ cert.calibration_date }}</td>
+                    <td>{{ cert.next_calibration_date }}</td>
+                    <td>
+                        {% with instrument=cert.thermohygrometermodel_set.first %}
+                            {% if instrument %}
+                                {{ instrument.instrument_name }}
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        {{ cert.temp_indication_point_1 }}°C ({{ cert.temp_correction_1 }})<br>
+                        {{ cert.temp_indication_point_2 }}°C ({{ cert.temp_correction_2 }})<br>
+                        {{ cert.temp_indication_point_3 }}°C ({{ cert.temp_correction_3 }})
+                    </td>
+                    <td>
+                        {{ cert.humidity_indication_point_1 }}% ({{ cert.humidity_correction_1 }})<br>
+                        {{ cert.humidity_indication_point_2 }}% ({{ cert.humidity_correction_2 }})<br>
+                        {{ cert.humidity_indication_point_3 }}% ({{ cert.humidity_correction_3 }})
+                    </td>
+                    <td>
+                        <button onclick="if(confirm('Are you sure?')) window.location.href='{% url 'delete_certificate' cert.pk %}'"
+                                class="btn btn-danger btn-sm">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
