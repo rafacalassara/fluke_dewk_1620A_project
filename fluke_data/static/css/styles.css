@@ -1,3 +1,7 @@
+:root {
+    --space: 1rem; /* Define o espaço base como 1rem */
+}
+
 body {
     font-family: 'Roboto', Arial, sans-serif;
     background-color: #f4f4f9;
@@ -323,3 +327,69 @@ label {
     margin-bottom: 5px;
 }
 
+.center {
+    text-align: center;
+}
+
+
+
+
+/* Margens Inferiores */
+.mb-1 { margin-bottom: var(--space); }
+.mb-2 { margin-bottom: calc(var(--space) * 2); }
+.mb-3 { margin-bottom: calc(var(--space) * 3); }
+
+
+/* Margens Esquerda */
+
+.ml-2 { margin-left: calc(var(--space) * 2); }
+.ml-3 { margin-left: calc(var(--space) * 3); }
+
+.mt-2 { margin-top: calc(var(--space) * 2); }
+.mt-3 { margin-top: calc(var(--space) * 3); }
+
+
+/* Recria a classe d-flex do Bootstrap */
+.d-flex {
+    display: flex;
+}
+
+/* Recria a classe justify-content-center do Bootstrap */
+.justify-content-center {
+    justify-content: center;
+}
+
+/* Recria a classe align-items-center do Bootstrap */
+.align-items-center {
+    align-items: center;
+}
+
+/* Recria a classe vh-100 do Bootstrap */
+.vh-100 {
+    height: 100vh;
+}
+
+.recuo {
+    text-indent: 2em;
+}
+
+.text-start {
+    text-align: left !important;
+}
+
+.text-justify {
+    text-align: justify;
+    text-justify: inter-word;
+}
+
+.skeleton {
+    animation: pulse 1.5s infinite;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
