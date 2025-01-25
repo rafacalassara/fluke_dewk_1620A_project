@@ -10,6 +10,7 @@ urlpatterns = [
     path('update_thermohygrometer/<int:pk>/', views.update_thermohygrometer, name='update_thermohygrometer'),
     path('api/add_thermohygrometer/', views.add_thermohygrometer, name='add_thermohygrometer'),
     path('api/delete_thermohygrometer/<int:id>/', views.delete_thermohygrometer, name='delete_thermohygrometer'),
+    path('api/analyze-with-ai/', views.analyze_with_ai, name='analyze_with_ai'),
     path('data_visualization/', views.data_visualization, name='data_visualization'),
     path('export-to-csv/', views.export_to_csv, name='export_to_csv'),
     path('real_time_data/', views.real_time_data, name='real_time_data'),

@@ -1,4 +1,5 @@
 {% extends "fluke_data/base.html" %}
+{% load static %}
 {% block title %}Intelligence{% endblock %}
 
 {% block content %}
@@ -31,6 +32,47 @@
     <h3>Gráfico de Umidade</h3>
     <canvas id="humidityChart" width="400" height="200"></canvas>
 </div>
+
+
+<div class="container d-flex justify-content-center align-items-center">
+    <div id="skeletonCard" class="card p-3" style="display: block; width: 32rem;">
+        <div class="skeleton center" style="width: 18rem; height: 40px; margin: auto; margin-bottom: 20px;"></div>
+        <div class="skeleton ml-3" style="width: 14rem; height: 30px; margin-bottom: 10px;"></div>
+        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+        <div class="skeleton" style="width: 28rem; height: 20px; margin-bottom: 16px;"></div>        
+
+        <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 14rem; height: 30px;"></h2>
+        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+        <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
+        <div class="skeleton" style="width: 8rem; height: 20px; margin-bottom: 10px;"></div>
+
+        <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 16rem; height: 30px;"></h2>
+        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+        <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
+        <div class="skeleton" style="width: 29rem; height: 20px; "></div>
+
+        <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 15rem; height: 30px;"></h2>
+        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+        <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
+        <div class="skeleton" style="width: 18rem; height: 20px; margin-bottom: 10px;"></div>
+    </div>
+    
+    <div id="dataCard" class="card p-3" style="display: none; width: 32rem;">
+        <h1 id="title"></h1>
+        <h2 class="recuo text-start">Resumo</h2>        
+        <p id="summary"></p>
+
+        <h2 class="recuo text-start" >Análise</h2>
+        <p id="analytics" class="recuo text-justify"></p>
+
+        <h2 class="recuo text-start">Sugestão</h2>
+        <p id="suggestion" class="recuo text-justify"></p>
+
+        <h2 class="recuo text-start">Conclusão</h2>
+        <p id="conclusion" class="recuo text-justify"></p>
+    </div>
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -142,5 +184,10 @@
         return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`;
     }
 </script>
+
+{% block extra_scripts %}
+    <script src="{% static 'js/intelligence.js' %}"></script>
+{% endblock %}
+
 {% endif %}
 {% endblock %}
