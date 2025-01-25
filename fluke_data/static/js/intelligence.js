@@ -15,7 +15,13 @@ function setLoading(state) {
 
 async function fetchData() {
     try {
-        const response = await fetch('/api/analyze-with-ai/'); // URL fictícia
+        const response = await fetch('/api/analyze-with-ai/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ data: data }),
+        });
         const data = await response.json();
         
         populateCard(data);

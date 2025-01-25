@@ -25,7 +25,6 @@ urlpatterns = [
     path('update_user/<int:user_id>/', views.update_user, name='update_user'),
     path('delete_user/<int:user_id>/', views.delete_user, name='delete_user'),
     path('login/', views.login_view, name='login'),
-    path('intelligence/', views.out_of_limits_chart, name='intelligence'),
     path('intelligence2/', views.intelligence2, name='intelligence2'),
 
     # Update certificate URLs to simpler paths
@@ -35,6 +34,9 @@ urlpatterns = [
          name='manage_all_certificates'),
     path('certificates/create/', views.create_certificate,
          name='create_certificate'),
-    path('ai-analysis/', views.ai_analysis, name='ai_analysis'),
-    path('api/analyze-with-ai/', views.analyze_with_ai, name='analyze_with_ai'),
+
+    # Intelligence
+    path('intelligence/', views.intelligence, name='intelligence'),
+    path('api/data-intelligence/', views.out_of_limits_chart, name='data_intelligence'), # retorno json - dados
+    path('api/analyze-with-ai/', views.analyze_with_ai, name='analyze_with_ai'), # retorno json - resultado de dados
 ]

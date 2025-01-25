@@ -329,26 +329,139 @@ def login_view(request):
 
     return render(request, 'fluke_data/login.html', {'form': form})
 
+@login_required
+@user_passes_test(is_manager)
+def delete_certificate(request, cert_pk):
+    certificate = get_object_or_404(CalibrationCertificateModel, pk=cert_pk)
+    thermohygrometer = ThermohygrometerModel.objects.filter(
+        calibration_certificate=certificate).first()
 
-def intelligence2(request):
-    # Buscar dados
-    measures = MeasuresModel.objects.all().values(
-        'id', 'temperature', 'humidity', 'date',
-        'instrument_id', 'corrected_temperature',
-        'corrected_humidity'
-    )
+    if thermohygrometer:
+        thermohygrometer.calibration_certificate = None
+        thermohygrometer.save()
 
-    instruments = ThermohygrometerModel.objects.all().values(
-        'id', 'instrument_name', 'group_name'
-    )
+    certificate.delete()
+    messages.success(request, 'Certificate deleted successfully.')
+    return redirect('manage_thermohygrometers')
 
-    # Converter para JSON
-    measures_json = json.dumps(list(measures), default=str)
 
-    return render(request, 'fluke_data/intelligence2.html', {
-        'measures': measures_json,
-        'instruments': instruments,
+@login_required
+@user_passes_test(is_manager)
+def manage_all_certificates(request):
+    certificates = CalibrationCertificateModel.objects.all().order_by('-calibration_date')
+
+    if request.method == 'POST':
+        form = CalibrationCertificateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Certificate added successfully.')
+            return redirect('manage_all_certificates')
+    else:
+        form = CalibrationCertificateForm()
+
+    return render(request, 'fluke_data/certificate/manage_all_certificates.html', {
+        'certificates': certificates,
+        'form': form
     })
+
+
+@login_required
+@user_passes_test(is_manager)
+def create_certificate(request):
+    if request.method == 'POST':
+        form = CalibrationCertificateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Certificate created successfully.')
+            return redirect('manage_all_certificates')
+    else:
+        form = CalibrationCertificateForm()
+
+    return render(request, 'fluke_data/certificate/create_certificate.html', {
+        'form': form
+    })
+
+
+
+# referencia para consulta de dados
+def ai_analysis(request):
+    form = AnalysisRequestForm()
+    results = None
+    error = None
+
+    if request.method == 'POST':
+        form = AnalysisRequestForm(request.POST)
+        if form.is_valid():
+            try:
+                start = form.cleaned_data['start_datetime']
+                end = form.cleaned_data['end_datetime']
+                instruments = form.cleaned_data['instruments']
+
+                # Filter measures for workdays (Monday-Friday)
+                measures = MeasuresModel.objects.filter(
+                    instrument__in=instruments,
+                    date__range=(start, end),
+                    # Monday(2) to Friday(6)
+                    date__week_day__in=[2, 3, 4, 5, 6],
+                    corrected_temperature__isnull=False,
+                    corrected_humidity__isnull=False
+                ).order_by('date')
+
+                # Prepare data for AI analysis
+                analysis_data = [{
+                    'timestamp': m.date.isoformat(),
+                    'temperature': m.corrected_temperature,
+                    'humidity': m.corrected_humidity,
+                    'instrument': m.instrument.instrument_name
+                } for m in measures]
+
+                # Store data in session for AI processing
+                request.session['analysis_data'] = analysis_data
+                return redirect('analyze_with_ai')
+
+            except Exception as e:
+                error = f"Erro ao recuperar dados: {str(e)}"
+
+    return render(request, 'fluke_data/ai_analysis.html', {
+        'form': form,
+        'error': error
+    })
+
+
+@csrf_exempt
+def analyze_with_ai(request):
+    if request.method == 'POST':
+        try:
+            data = request.session.get('analysis_data', [])
+
+            if not data:
+                return JsonResponse({'error': 'No data to analyze'}, status=400)
+
+            # TODO: Implement OpenAI API call
+            # Example structure:
+            """
+            openai.api_key = "SUA_CHAVE_API"
+            
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{
+                    "role": "user",
+                    "content": f"Analise estes dados de termohigrômetros: {json.dumps(data)}. Forneça insights sobre tendências, anomalias e recomendações."
+                }]
+            )
+            
+            analysis = response.choices[0].message.content
+            """
+
+            # Temporary mock response
+            analysis = "Análise simulada:\n- Padrões estáveis de temperatura\n- Pico de umidade detectado em 2023-05-15"
+
+            return JsonResponse({'analysis': analysis})
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return render(request, 'fluke_data/ai_analysis_results.html')
 
 
 def out_of_limits_chart(request):
@@ -447,150 +560,10 @@ def out_of_limits_chart(request):
         'humidity_data': dict(humidity_data),
         'timestamps': sorted(timestamps)  # Lista de timestamps ordenados
     }
-    return render(request, 'fluke_data/intelligence.html', context)
+    return JsonResponse(context)
 
-
-@login_required
-@user_passes_test(is_manager)
-def delete_certificate(request, cert_pk):
-    certificate = get_object_or_404(CalibrationCertificateModel, pk=cert_pk)
-    thermohygrometer = ThermohygrometerModel.objects.filter(
-        calibration_certificate=certificate).first()
-
-    if thermohygrometer:
-        thermohygrometer.calibration_certificate = None
-        thermohygrometer.save()
-
-    certificate.delete()
-    messages.success(request, 'Certificate deleted successfully.')
-    return redirect('manage_thermohygrometers')
-
-
-@login_required
-@user_passes_test(is_manager)
-def manage_all_certificates(request):
-    certificates = CalibrationCertificateModel.objects.all().order_by('-calibration_date')
-
-    if request.method == 'POST':
-        form = CalibrationCertificateForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Certificate added successfully.')
-            return redirect('manage_all_certificates')
-    else:
-        form = CalibrationCertificateForm()
-
-    return render(request, 'fluke_data/certificate/manage_all_certificates.html', {
-        'certificates': certificates,
-        'form': form
-    })
-
-
-@login_required
-@user_passes_test(is_manager)
-def create_certificate(request):
-    if request.method == 'POST':
-        form = CalibrationCertificateForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Certificate created successfully.')
-            return redirect('manage_all_certificates')
-    else:
-        form = CalibrationCertificateForm()
-
-    return render(request, 'fluke_data/certificate/create_certificate.html', {
-        'form': form
-    })
-
-
-def carrega_pagina_inteligencia(request):
-    pass  # TODO: Implementar a lógica para carregar a página de inteligência
-    # fazer chamada para o LLM
-
-
-def fazer_chamada_para_llm(request):
-    pass  # TODO: Implementar a lógica para fazer a chamada para o LLM
-
-
-def ai_analysis(request):
-    form = AnalysisRequestForm()
-    results = None
-    error = None
-
-    if request.method == 'POST':
-        form = AnalysisRequestForm(request.POST)
-        if form.is_valid():
-            try:
-                start = form.cleaned_data['start_datetime']
-                end = form.cleaned_data['end_datetime']
-                instruments = form.cleaned_data['instruments']
-
-                # Filter measures for workdays (Monday-Friday)
-                measures = MeasuresModel.objects.filter(
-                    instrument__in=instruments,
-                    date__range=(start, end),
-                    # Monday(2) to Friday(6)
-                    date__week_day__in=[2, 3, 4, 5, 6],
-                    corrected_temperature__isnull=False,
-                    corrected_humidity__isnull=False
-                ).order_by('date')
-
-                # Prepare data for AI analysis
-                analysis_data = [{
-                    'timestamp': m.date.isoformat(),
-                    'temperature': m.corrected_temperature,
-                    'humidity': m.corrected_humidity,
-                    'instrument': m.instrument.instrument_name
-                } for m in measures]
-
-                # Store data in session for AI processing
-                request.session['analysis_data'] = analysis_data
-                return redirect('analyze_with_ai')
-
-            except Exception as e:
-                error = f"Erro ao recuperar dados: {str(e)}"
-
-    return render(request, 'fluke_data/ai_analysis.html', {
-        'form': form,
-        'error': error
-    })
-
-
-@csrf_exempt
-def analyze_with_ai(request):
-    if request.method == 'POST':
-        try:
-            data = request.session.get('analysis_data', [])
-
-            if not data:
-                return JsonResponse({'error': 'No data to analyze'}, status=400)
-
-            # TODO: Implement OpenAI API call
-            # Example structure:
-            """
-            openai.api_key = "SUA_CHAVE_API"
-            
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{
-                    "role": "user",
-                    "content": f"Analise estes dados de termohigrômetros: {json.dumps(data)}. Forneça insights sobre tendências, anomalias e recomendações."
-                }]
-            )
-            
-            analysis = response.choices[0].message.content
-            """
-
-            # Temporary mock response
-            analysis = "Análise simulada:\n- Padrões estáveis de temperatura\n- Pico de umidade detectado em 2023-05-15"
-
-            return JsonResponse({'analysis': analysis})
-
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
-    return render(request, 'fluke_data/ai_analysis_results.html')
-
+def intelligence(request):
+    return render(request, 'fluke_data/intelligence.html')
 
 json={
     'titulo':'',
