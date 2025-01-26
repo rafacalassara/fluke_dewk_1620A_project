@@ -1,8 +1,12 @@
+import os
 from textwrap import dedent
 
 from crewai import Agent, Crew, Process, Task
 from dotenv import load_dotenv
+from load_dotenv import load_dotenv
 from pydantic import BaseModel
+
+from .tools.data_analysis_tools import analyze_environmental_impact
 
 # from .tools.data_analysis_tools import (NumpyAnalysisTool, PandasAnalysisTool,
 #                                         StatisticalAnalysisTool,
@@ -12,33 +16,26 @@ load_dotenv()
 
 
 class OutputReportFormat(BaseModel):
-    titulo: str
-    resumo: str
-    analise: str
-    sugestoes: str
-    conclusao: str
+    title: str
+    summary: str
+    analytics: str
+    suggestion: str
+    conclusion: str
 
 
 class ACImpactAnalysisCrew:
-    def __init__(self):
+    def __init__(self, start_date, end_date, instruments, start_time='08:00', end_time='16:00'):
         # Initialize tools
-        # self.pandas_tool = PandasAnalysisTool()
-        # self.numpy_tool = NumpyAnalysisTool()
-        # self.viz_tool = VisualizationTool()
-        # self.stats_tool = StatisticalAnalysisTool()
-
-        # Define data validator agent
-        self.data_validator = Agent(
-            role='Data Quality Analyst',
-            goal='Validate and clean input data',
-            backstory=dedent("""
-                You are a data quality specialist with expertise in identifying
-                and resolving data integrity issues in environmental datasets."""),
-            # tools=[self.pandas_tool, self.numpy_tool],
-            verbose=True,
-            cache=True
+        self.environmental_report = analyze_environmental_impact(
+            start_date=start_date,
+            end_date=end_date,
+            instruments=instruments,
+            start_time=start_time,
+            end_time=end_time
         )
+        self.create_agents()
 
+    def create_agents(self):
         self.thermal_analyst = Agent(
             role='Thermal Stability Analyst',
             goal='Analyze temperature variations and their impact on lab conditions',
@@ -49,7 +46,8 @@ class ACImpactAnalysisCrew:
             # tools=[self.pandas_tool, self.numpy_tool,
             #        self.stats_tool, self.viz_tool],
             cache=True,
-            verbose=True
+            verbose=True,
+            model=os.getenv('THERMAL_ANALYST_MODEL', 'gpt-4o-mini')
         )
 
         self.humidity_expert = Agent(
@@ -62,6 +60,7 @@ class ACImpactAnalysisCrew:
             # tools=[self.pandas_tool, self.stats_tool, self.viz_tool],
             verbose=True,
             cache=True,
+            model=os.getenv('HUMIDITY_EXPERT_MODEL', 'gpt-4o-mini')
         )
 
         self.productivity_analyst = Agent(
@@ -74,6 +73,7 @@ class ACImpactAnalysisCrew:
             # tools=[self.pandas_tool, self.stats_tool],
             verbose=True,
             cache=True,
+            model=os.getenv('PRODUCTIVITY_ANALYST_MODEL', 'gpt-4o-mini')
         )
 
         self.report_generator = Agent(
@@ -87,63 +87,67 @@ class ACImpactAnalysisCrew:
             verbose=True,
             cache=True,
             allow_delegation=True,
+            model=os.getenv('REPORT_GENERATOR_MODEL', 'gpt-4o-mini')
         )
 
     def create_tasks(self):
-        analyze_temperature = Task(
-            description=dedent("""
-                Perform detailed temperature analysis:
-                1. Calculate thermal stability metrics
-                2. Identify deviations from optimal range
-                3. Analyze temperature gradients
-                4. Correlate with AC operation patterns
+        analyze_temperature_task_description = dedent(f"""
+            Perform detailed temperature analysis:
+            1. Calculate thermal stability metrics
+            2. Identify deviations from optimal range
+            3. Analyze temperature gradients
+            4. Correlate with AC operation patterns
 
-                The data is stored in the tags <data> and </data>
-                <data>
-                {data}
-                </data>
-            """),
+            The data is stored in the tags <data> and </data>
+            <data>
+            {self.environmental_report}
+            </data>
+        """)
+        analyze_temperature = Task(
+            description=analyze_temperature_task_description,
             expected_output=dedent('''Detailed thermal analysis containing:
             1. Thermal stability index
             2. Total time outside ideal range
             3. Hourly temperature gradients
-            4. Correlation with AC cycles
-            5. Temporal trend graphs'''),
+            4. Correlation with AC cycle'''),
             agent=self.thermal_analyst,
             # async_execution=True,
         )
 
-        analyze_humidity = Task(
-            description=dedent("""
-                Conduct humidity performance analysis:
-                1. Evaluate humidity distribution patterns
-                2. Identify critical humidity events
-                3. Calculate humidity variation rates
-                4. Assess correlation with temperature changes
+        analyze_humidity_task_description = dedent(f"""
+            Perform detailed humidity analysis:
+            1. Calculate humidity stability metrics
+            2. Identify deviations from optimal range
+            3. Analyze humidity gradients
+            4. Correlate with AC operation patterns
 
-                The data is stored in the tags <data> and </data>
-                <data>
-                {data}
-                </data>
-            """),
+            The data is stored in the tags <data> and </data>
+            <data>
+            {self.environmental_report}
+            </data>
+        """)
+        
+        analyze_humidity = Task(
+            description=analyze_humidity_task_description,
             agent=self.humidity_expert,
             expected_output=dedent('''Hygrometric performance report containing:
             1. Humidity percentage distribution
             2. Critical events (peaks/valleys) identified
             3. Variation rates by period
-            4. Humidity-temperature correlation
-            5. Operation range diagram'''),
+            4. Humidity-temperature correlation'''),
             # async_execution=True,
         )
 
+        analyze_productivity_impact_task_description = dedent("""
+            Analyze the impact of environmental conditions on operations:
+            1. Correlate thermal variations with productivity
+            2. Link critical humidity events with operational stops
+            3. Calculate potential losses from environmental deviations
+            4. Identify peak operational efficiency hours
+        """)
+
         analyze_productivity_impact = Task(
-            description=dedent("""
-                Analyze the impact of environmental conditions on operations:
-                1. Correlate thermal variations with productivity
-                2. Link critical humidity events with operational stops
-                3. Calculate potential losses from environmental deviations
-                4. Identify peak operational efficiency hours
-            """),
+            description=analyze_productivity_impact_task_description,
             expected_output=dedent('''Operational impact report containing:
             1. Productivity index by thermal range
             2. Time lost due to critical events
@@ -182,7 +186,7 @@ class ACImpactAnalysisCrew:
         return [analyze_temperature, analyze_humidity,
                 analyze_productivity_impact, generate_report]
 
-    def run_analysis(self, data):
+    def run_analysis(self):
         """
         Execute the AC impact analysis workflow
 
@@ -194,7 +198,6 @@ class ACImpactAnalysisCrew:
         """
         crew = Crew(
             agents=[
-                self.data_validator,
                 self.thermal_analyst,
                 self.humidity_expert,
                 self.productivity_analyst,
@@ -206,8 +209,8 @@ class ACImpactAnalysisCrew:
             cache=True,
         )
 
-        result = crew.kickoff(inputs={"data": data})
-        return result
+        result = crew.kickoff()
+        return result.pydantic.json()
 
 # Example usage:
 # crew = ACImpactAnalysisCrew()

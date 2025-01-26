@@ -6,6 +6,7 @@ from .models import ThermohygrometerModel, CalibrationCertificateModel
 
 User = get_user_model()
 
+
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
@@ -25,14 +26,19 @@ class UserForm(forms.ModelForm):
             'is_manager': None,
         }
 
+
 class CustomLoginForm(AuthenticationForm):
-    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
 
 class CreateUserForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ['name', 'username', 'email', 'password1', 'password2', 'is_manager']
+        fields = ['name', 'username', 'email',
+                  'password1', 'password2', 'is_manager']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'username': forms.TextInput(attrs={'class': 'form-control'}),
@@ -41,6 +47,7 @@ class CreateUserForm(UserCreationForm):
             'password2': forms.PasswordInput(attrs={'class': 'form-control'}),
             'is_manager': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
 
 class UpdateUserForm(UserChangeForm):
     new_password1 = forms.CharField(
@@ -56,7 +63,8 @@ class UpdateUserForm(UserChangeForm):
 
     class Meta:
         model = User
-        fields = ['name', 'username', 'email', 'first_name', 'last_name', 'is_manager']
+        fields = ['name', 'username', 'email',
+                  'first_name', 'last_name', 'is_manager']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'username': forms.TextInput(attrs={'class': 'form-control'}),
@@ -72,9 +80,11 @@ class UpdateUserForm(UserChangeForm):
         new_password2 = cleaned_data.get('new_password2')
 
         if new_password1 and new_password1 != new_password2:
-            self.add_error('new_password2', "The two password fields didn't match.")
-        
+            self.add_error('new_password2',
+                           "The two password fields didn't match.")
+
         return cleaned_data
+
 
 class ThermohygrometerForm(forms.ModelForm):
     calibration_certificate = forms.ModelChoiceField(
@@ -116,6 +126,7 @@ class ThermohygrometerForm(forms.ModelForm):
             'min_humidity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Min Humidity (%)'}),
             'max_humidity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Max Humidity (%)'}),
         }
+
 
 class CalibrationCertificateForm(forms.ModelForm):
     class Meta:
@@ -159,8 +170,43 @@ class CalibrationCertificateForm(forms.ModelForm):
             'humidity_uncertainty': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
         }
 
+
 class AnalysisPeriodForm(forms.Form):
-    start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Data inicial")
-    end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Data final")
-    start_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora inicial")
-    end_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), label="Hora final")
+    start_date = forms.DateField(widget=forms.DateInput(
+        attrs={'type': 'date'}), label="Data inicial")
+    end_date = forms.DateField(widget=forms.DateInput(
+        attrs={'type': 'date'}), label="Data final")
+    start_time = forms.TimeField(widget=forms.TimeInput(
+        attrs={'type': 'time'}), label="Hora inicial")
+    end_time = forms.TimeField(widget=forms.TimeInput(
+        attrs={'type': 'time'}), label="Hora final")
+
+
+class EnvironmentalAnalysisForm(forms.Form):
+    start_date = forms.DateField(
+        widget=forms.DateInput(
+            attrs={'type': 'date', 'class': 'form-control'}),
+        label='Data Inicial'
+    )
+    end_date = forms.DateField(
+        widget=forms.DateInput(
+            attrs={'type': 'date', 'class': 'form-control'}),
+        label='Data Final'
+    )
+    instruments = forms.ModelMultipleChoiceField(
+        queryset=ThermohygrometerModel.objects.all().order_by('instrument_name'),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        label='Instrumentos'
+    )
+    start_time = forms.TimeField(
+        widget=forms.TimeInput(
+            attrs={'type': 'time', 'class': 'form-control'}),
+        initial='08:00',
+        label='Horário Inicial'
+    )
+    end_time = forms.TimeField(
+        widget=forms.TimeInput(
+            attrs={'type': 'time', 'class': 'form-control'}),
+        initial='16:00',
+        label='Horário Final'
+    )

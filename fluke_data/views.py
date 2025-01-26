@@ -2,7 +2,7 @@
 from collections import defaultdict
 import json
 import csv
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, date
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
@@ -14,9 +14,11 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.hashers import make_password
 from django.utils.timezone import make_aware
 
+
 from .forms import *
 from .models import *
 from .visa_communication import Instrument
+from .crews.crew import ACImpactAnalysisCrew
 
 User = get_user_model()
 # Check if the user is a manager
@@ -329,11 +331,12 @@ def login_view(request):
 
     return render(request, 'fluke_data/login.html', {'form': form})
 
+
 def intelligence2(request):
     # Buscar dados
     measures = MeasuresModel.objects.all().values(
-        'id', 'temperature', 'humidity', 'date', 
-        'instrument_id', 'corrected_temperature', 
+        'id', 'temperature', 'humidity', 'date',
+        'instrument_id', 'corrected_temperature',
         'corrected_humidity'
     )
 
@@ -348,7 +351,8 @@ def intelligence2(request):
         'measures': measures_json,
         'instruments': instruments,
     })
-    
+
+
 @login_required
 @user_passes_test(is_manager)
 def delete_certificate(request, cert_pk):
@@ -402,104 +406,30 @@ def create_certificate(request):
     })
 
 
-
-# referencia para consulta de dados
-def ai_analysis(request):
-    form = AnalysisRequestForm()
-    results = None
-    error = None
-
-    if request.method == 'POST':
-        form = AnalysisRequestForm(request.POST)
-        if form.is_valid():
-            try:
-                start = form.cleaned_data['start_datetime']
-                end = form.cleaned_data['end_datetime']
-                instruments = form.cleaned_data['instruments']
-
-                # Filter measures for workdays (Monday-Friday)
-                measures = MeasuresModel.objects.filter(
-                    instrument__in=instruments,
-                    date__range=(start, end),
-                    # Monday(2) to Friday(6)
-                    date__week_day__in=[2, 3, 4, 5, 6],
-                    corrected_temperature__isnull=False,
-                    corrected_humidity__isnull=False
-                ).order_by('date')
-
-                # Prepare data for AI analysis
-                analysis_data = [{
-                    'timestamp': m.date.isoformat(),
-                    'temperature': m.corrected_temperature,
-                    'humidity': m.corrected_humidity,
-                    'instrument': m.instrument.instrument_name
-                } for m in measures]
-
-                # Store data in session for AI processing
-                request.session['analysis_data'] = analysis_data
-                return redirect('analyze_with_ai')
-
-            except Exception as e:
-                error = f"Erro ao recuperar dados: {str(e)}"
-
-    return render(request, 'fluke_data/ai_analysis.html', {
-        'form': form,
-        'error': error
-    })
-
-
-@csrf_exempt
-def analyze_with_ai(request):
-    if request.method == 'POST':
-        try:
-            data = request.session.get('analysis_data', [])
-
-            if not data:
-                return JsonResponse({'error': 'No data to analyze'}, status=400)
-
-            # TODO: Implement OpenAI API call
-            # Example structure:
-            """
-            openai.api_key = "SUA_CHAVE_API"
-            
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{
-                    "role": "user",
-                    "content": f"Analise estes dados de termohigrômetros: {json.dumps(data)}. Forneça insights sobre tendências, anomalias e recomendações."
-                }]
-            )
-            
-            analysis = response.choices[0].message.content
-            """
-
-            # Temporary mock response
-            analysis = "Análise simulada:\n- Padrões estáveis de temperatura\n- Pico de umidade detectado em 2023-05-15"
-
-            return JsonResponse({'analysis': analysis})
-
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
-    return render(request, 'fluke_data/ai_analysis_results.html')
-
-
 def out_of_limits_chart(request):
-    form = AnalysisPeriodForm(request.POST or None)
+    form = EnvironmentalAnalysisForm(request.POST or None)
     data = []
     total_time_available = 0
     analysis_period = ""
-    # Armazena dados de temperatura por instrumento
     temperature_data = defaultdict(list)
-    # Armazena dados de umidade por instrumento
     humidity_data = defaultdict(list)
-    timestamps = set()                   # Conjunto para armazenar timestamps únicos
+    timestamps = set()
 
     if form.is_valid():
         start_date = form.cleaned_data['start_date']
         end_date = form.cleaned_data['end_date']
         start_time = form.cleaned_data['start_time']
         end_time = form.cleaned_data['end_time']
+        instruments = form.cleaned_data['instruments']
+
+        # Prepare data for AI analysis
+        ai_data = {
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'start_time': start_time.strftime('%H:%M'),
+            'end_time': end_time.strftime('%H:%M'),
+            'instruments': [{'id': inst.id, 'instrument_name': inst.instrument_name} for inst in instruments]
+        }
 
         start_datetime = datetime.combine(start_date, start_time)
         end_datetime = datetime.combine(end_date, end_time)
@@ -514,8 +444,6 @@ def out_of_limits_chart(request):
         ]
         total_time_available = len(
             weekdays) * ((end_time.hour - start_time.hour) + (end_time.minute - start_time.minute) / 60)
-
-        instruments = ThermohygrometerModel.objects.all()
 
         for instrument in instruments:
             measures = MeasuresModel.objects.filter(
@@ -577,14 +505,100 @@ def out_of_limits_chart(request):
         'analysis_period': analysis_period,
         'temperature_data': dict(temperature_data),
         'humidity_data': dict(humidity_data),
-        'timestamps': sorted(timestamps)  # Lista de timestamps ordenados
+        'timestamps': sorted(timestamps),  # Lista de timestamps ordenados
+        'ai_data': ai_data if form.is_valid() else None  # Include AI data in response
     }
-    
+
     return JsonResponse(context)
 
+
 def intelligence(request):
+    form = EnvironmentalAnalysisForm(request.GET or None)
     context = {
-        'form': AnalysisPeriodForm(request.GET or None)
+        'form': form
     }
 
-    return render(request, 'fluke_data/intelligence.html', context)    
+    return render(request, 'fluke_data/intelligence.html', context)
+
+
+@csrf_exempt
+def analyze_with_ai(request):
+    if request.method == 'POST':
+        form_data = json.loads(request.body)
+        try:
+            # Get form data
+            start_date = form_data['ai_data']['start_date']
+            end_date = form_data['ai_data']['end_date']
+            instruments = form_data['ai_data']['instruments']
+            start_time = form_data['ai_data']['start_time']
+            end_time = form_data['ai_data']['end_time']
+
+            analysis_crew = ACImpactAnalysisCrew(
+                start_date=start_date,
+                end_date=end_date,
+                instruments=instruments,
+                start_time=start_time,
+                end_time=end_time
+            )
+            # Call the analysis function
+            results = analysis_crew.run_analysis()
+
+            return JsonResponse(results, safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+
+    return render(request, 'fluke_data/intelligence.html')
+
+
+# json = {
+#     'titulo': '',
+#     'resumo': '',
+#     'analise': '',
+#     'sugestoes': '',
+#     'conclusao': ''
+# }
+
+
+# @login_required
+# @user_passes_test(is_manager)
+# def test_environmental_analysis(request):
+#     """
+#     View for environmental impact analysis with form
+#     """
+#     if request.method == 'POST':
+#         form = EnvironmentalAnalysisForm(request.POST)
+#         if form.is_valid():
+#             try:
+#                 # Get form data
+#                 start_date = form.cleaned_data['start_date']
+#                 end_date = form.cleaned_data['end_date']
+#                 instruments = form.cleaned_data['instruments']
+#                 start_time = form.cleaned_data['start_time'].strftime(
+#                     '%H:%M')
+#                 end_time = form.cleaned_data['end_time'].strftime('%H:%M')
+
+#                 # Call the analysis function
+#                 results = analyze_environmental_impact(
+#                     start_date=start_date,
+#                     end_date=end_date,
+#                     instruments=instruments,
+#                     start_time_time=start_time,
+#                     end_time_time=end_time
+#                 )
+
+#                 return render(request, 'fluke_data/environmental_analysis.html', {
+#                     'form': form,
+#                     'results': results
+#                 })
+
+#             except Exception as e:
+#                 return render(request, 'fluke_data/environmental_analysis.html', {
+#                     'form': form,
+#                     'error': str(e)
+#                 })
+#     else:
+#         form = EnvironmentalAnalysisForm()
+
+#     return render(request, 'fluke_data/environmental_analysis.html', {
+#         'form': form
+#     })
