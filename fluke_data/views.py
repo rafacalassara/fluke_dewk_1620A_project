@@ -329,6 +329,26 @@ def login_view(request):
 
     return render(request, 'fluke_data/login.html', {'form': form})
 
+def intelligence2(request):
+    # Buscar dados
+    measures = MeasuresModel.objects.all().values(
+        'id', 'temperature', 'humidity', 'date', 
+        'instrument_id', 'corrected_temperature', 
+        'corrected_humidity'
+    )
+
+    instruments = ThermohygrometerModel.objects.all().values(
+        'id', 'instrument_name', 'group_name'
+    )
+
+    # Converter para JSON
+    measures_json = json.dumps(list(measures), default=str)
+
+    return render(request, 'fluke_data/intelligence2.html', {
+        'measures': measures_json,
+        'instruments': instruments,
+    })
+    
 @login_required
 @user_passes_test(is_manager)
 def delete_certificate(request, cert_pk):
@@ -465,7 +485,7 @@ def analyze_with_ai(request):
 
 
 def out_of_limits_chart(request):
-    form = AnalysisPeriodForm(request.GET or None)
+    form = AnalysisPeriodForm(request.POST or None)
     data = []
     total_time_available = 0
     analysis_period = ""
@@ -552,7 +572,6 @@ def out_of_limits_chart(request):
                     })
 
     context = {
-        'form': form,
         'data': data,
         'total_time_available': total_time_available,
         'analysis_period': analysis_period,
@@ -560,15 +579,12 @@ def out_of_limits_chart(request):
         'humidity_data': dict(humidity_data),
         'timestamps': sorted(timestamps)  # Lista de timestamps ordenados
     }
+    
     return JsonResponse(context)
 
 def intelligence(request):
-    return render(request, 'fluke_data/intelligence.html')
+    context = {
+        'form': AnalysisPeriodForm(request.GET or None)
+    }
 
-json={
-    'titulo':'',
-    'resumo':'',
-    'analise':'',
-    'sugestoes':'',
-    'conclusao':''
-}
+    return render(request, 'fluke_data/intelligence.html', context)    
