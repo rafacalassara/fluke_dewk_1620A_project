@@ -5,189 +5,81 @@
 {% block content %}
 
 <form method="get" class="form-inline">
+    {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary">Filtrar</button>
 </form>
 
-{% if data %}
-<div>
-    <h5>Legenda:</h5>
-    <ul>
-        <h5><strong>Período solicitado:</strong> {{ analysis_period }}</h5>
-        <h5><strong>Tempo total disponível:</strong> {{ total_time_available }} horas</h5>
-    </ul>
-</div>
 
-<div>
-    <h3>Gráfico de Percentual Fora dos Limites</h3>
-    <canvas id="outOfLimitsChart" width="400" height="200"></canvas>
-</div>
-
-<div>
-    <h3>Gráfico de Temperatura</h3>
-    <canvas id="temperatureChart" width="400" height="200"></canvas>
-</div>
-
-<div>
-    <h3>Gráfico de Umidade</h3>
-    <canvas id="humidityChart" width="400" height="200"></canvas>
-</div>
-
-
-<div class="container d-flex justify-content-center align-items-center">
-    <div id="skeletonCard" class="card p-3" style="display: block; width: 32rem;">
-        <div class="skeleton center" style="width: 18rem; height: 40px; margin: auto; margin-bottom: 20px;"></div>
-        <div class="skeleton ml-3" style="width: 14rem; height: 30px; margin-bottom: 10px;"></div>
-        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
-        <div class="skeleton" style="width: 28rem; height: 20px; margin-bottom: 16px;"></div>        
-
-        <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 14rem; height: 30px;"></h2>
-        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
-        <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-        <div class="skeleton" style="width: 8rem; height: 20px; margin-bottom: 10px;"></div>
-
-        <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 16rem; height: 30px;"></h2>
-        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
-        <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-        <div class="skeleton" style="width: 29rem; height: 20px; "></div>
-
-        <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 15rem; height: 30px;"></h2>
-        <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
-        <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-        <div class="skeleton" style="width: 18rem; height: 20px; margin-bottom: 10px;"></div>
+<div id="results" style="display: none;">
+    <div>
+        <h5>Legenda:</h5>
+        <ul>
+            <h5><strong>Período solicitado:</strong> <span data-analysis-period=""></span>{{ analysis_period }}</h5>
+            <h5><strong>Tempo total disponível:</strong> <span data-time-available=""></span>{{ total_time_available }} horas</h5>
+        </ul>
     </div>
-    
-    <div id="dataCard" class="card p-3" style="display: none; width: 32rem;">
-        <h1 id="title"></h1>
-        <h2 class="recuo text-start">Resumo</h2>        
-        <p id="summary"></p>
 
-        <h2 class="recuo text-start" >Análise</h2>
-        <p id="analytics" class="recuo text-justify"></p>
+    <div>
+        <h3>Gráfico de Percentual Fora dos Limites</h3>
+        <canvas id="outOfLimitsChart" width="400" height="200"></canvas>
+    </div>
 
-        <h2 class="recuo text-start">Sugestão</h2>
-        <p id="suggestion" class="recuo text-justify"></p>
+    <div>
+        <h3>Gráfico de Temperatura</h3>
+        <canvas id="temperatureChart" width="400" height="200"></canvas>
+    </div>
 
-        <h2 class="recuo text-start">Conclusão</h2>
-        <p id="conclusion" class="recuo text-justify"></p>
+    <div>
+        <h3>Gráfico de Umidade</h3>
+        <canvas id="humidityChart" width="400" height="200"></canvas>
+    </div>
+
+
+    <div class="container d-flex justify-content-center align-items-center">
+        <div id="skeletonCard" class="card p-3" style="display: block; width: 32rem;">
+            <div class="skeleton center" style="width: 18rem; height: 40px; margin: auto; margin-bottom: 20px;"></div>
+            <div class="skeleton ml-3" style="width: 14rem; height: 30px; margin-bottom: 10px;"></div>
+            <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="width: 28rem; height: 20px; margin-bottom: 16px;"></div>        
+
+            <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 14rem; height: 30px;"></h2>
+            <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="width: 8rem; height: 20px; margin-bottom: 10px;"></div>
+
+            <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 16rem; height: 30px;"></h2>
+            <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="width: 29rem; height: 20px; "></div>
+
+            <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 15rem; height: 30px;"></h2>
+            <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
+            <div class="skeleton" style="width: 18rem; height: 20px; margin-bottom: 10px;"></div>
+        </div>
+        
+        <div id="dataCard" class="card p-3" style="display: none; width: 32rem;">
+            <h1 id="title"></h1>
+            <h2 class="recuo text-start">Resumo</h2>        
+            <p id="summary"></p>
+
+            <h2 class="recuo text-start" >Análise</h2>
+            <p id="analytics" class="recuo text-justify"></p>
+
+            <h2 class="recuo text-start">Sugestão</h2>
+            <p id="suggestion" class="recuo text-justify"></p>
+
+            <h2 class="recuo text-start">Conclusão</h2>
+            <p id="conclusion" class="recuo text-justify"></p>
+        </div>
     </div>
 </div>
 
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-
-<script>
-    // Dados do gráfico de barras (percentual fora dos limites)
-    const data = {{ data|safe }};
-    const labels = data.map(item => item.instrument_name);
-    const values = data.map(item => item.percent_out_of_limits);
-    const analysisPeriod = "{{ analysis_period }}";
-
-    const ctxBar = document.getElementById('outOfLimitsChart').getContext('2d');
-    new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: `Percentual fora dos limites (%) - Período: ${analysisPeriod}`,
-                data: values,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    // Dados do gráfico de linha (temperatura e umidade)
-    const timestamps = {{ timestamps|safe }};
-    const temperatureData = {{ temperature_data|safe }};
-    const humidityData = {{ humidity_data|safe }};
-
-    // Gráfico de Temperatura
-    const temperatureCtx = document.getElementById('temperatureChart').getContext('2d');
-    const temperatureDatasets = Object.keys(temperatureData).map(instrument => ({
-        label: instrument,
-        data: temperatureData[instrument].map(entry => ({
-            x: entry.timestamp,
-            y: entry.value
-        })),
-        borderColor: getRandomColor(),
-        fill: false,
-        pointRadius: 0.5,
-        spanGaps: true,
-    }));
-
-    new Chart(temperatureCtx, {
-        type: 'line',
-        data: {
-            datasets: temperatureDatasets
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'time',
-                    time: { unit: 'hour' }
-                },
-                y: {
-                    beginAtZero: false
-                }
-            }
-        }
-    });
-
-    // Gráfico de Umidade
-    const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-    const humidityDatasets = Object.keys(humidityData).map(instrument => ({
-        label: instrument,
-        data: humidityData[instrument].map(entry => ({
-            x: entry.timestamp,
-            y: entry.value
-        })),
-        borderColor: getRandomColor(),
-        fill: false,
-        pointRadius: 0.5,
-        spanGaps: false,
-    }));
-
-    new Chart(humidityCtx, {
-        type: 'line',
-        data: {
-            datasets: humidityDatasets
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'time',
-                    time: { unit: 'hour' }
-                },
-                y: {
-                    beginAtZero: false
-                }
-            }
-        }
-    });
-
-    function getRandomColor() {
-        return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`;
-    }
-</script>
-
-{% block extra_scripts %}
-    <script src="{% static 'js/intelligence.js' %}"></script>
 {% endblock %}
 
-{% endif %}
+{% block extra_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="{% static 'js/intelligence.js' %}"></script>
 {% endblock %}
