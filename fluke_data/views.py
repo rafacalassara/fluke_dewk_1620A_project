@@ -540,11 +540,13 @@ def analyze_with_ai(request):
                 start_time=start_time,
                 end_time=end_time
             )
-            # Call the analysis function
-            results = analysis_crew.run_analysis()
+            # Call the analysis function and parse the JSON string
+            results = json.loads(analysis_crew.run_analysis())
+            print("Debug - Analysis results:", results)  # Debug print
 
             return JsonResponse(results, safe=False)
         except Exception as e:
+            print("Debug - Error:", str(e))  # Debug print
             return JsonResponse({'error': str(e)})
 
     return render(request, 'fluke_data/intelligence.html')

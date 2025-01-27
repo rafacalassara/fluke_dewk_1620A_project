@@ -1,10 +1,10 @@
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
 
     const form = document.querySelector('form')
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        
+
         const formData = new FormData(form);
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const data = await response.json();
 
                 // form.reset()
-               
+
                 // document.getElementById('skeletonCard').style.display = 'block'; 
                 // setLoading();
                 showCharts(data);
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     let chartInstance = {};
 
-    function showCharts({data, analysis_period, humidity_data, temperature_data, total_time_available}) {
+    function showCharts({ data, analysis_period, humidity_data, temperature_data, total_time_available }) {
 
         document.querySelector('[data-analysis-period]').textContent = analysis_period
         document.querySelector('[data-time-available]').textContent = total_time_available
@@ -51,11 +51,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         const labels = data.map(item => item.instrument_name);
         const values = data.map(item => item.percent_out_of_limits);
 
-        
-        chartInstance.ctxBar?.destroy();  
-        chartInstance.temperatureCtx?.destroy(); 
-        chartInstance.humidityCtx?.destroy(); 
-    
+
+        chartInstance.ctxBar?.destroy();
+        chartInstance.temperatureCtx?.destroy();
+        chartInstance.humidityCtx?.destroy();
+
 
         const ctxBar = document.getElementById('outOfLimitsChart').getContext('2d');
         chartInstance.ctxBar = new Chart(ctxBar, {
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value + '%';
                             }
                         }
@@ -161,10 +161,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('suggestion').innerText = data.suggestion;
         document.getElementById('conclusion').innerText = data.conclusion;
     }
-    
+
     async function fetchData(data) {
         try {
-            
             document.getElementById('skeletonCard').style.display = 'block';
 
             const response = await fetch('/api/analyze-with-ai/', {
@@ -176,21 +175,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
 
             const result = await response.json();
-            
+
             if (response.ok) {
-                console.log('Formulário enviado com sucesso:', result);
+                console.log('Response data:', result);
                 populateCard(result);
-        
-                document.getElementById('dataCard').style.display = 'block'; 
-                document.getElementById('skeletonCard').style.display = 'none'; 
+
+                document.getElementById('dataCard').style.display = 'block';
+                document.getElementById('skeletonCard').style.display = 'none';
             } else {
-                
                 console.error('Erro na requisição:', result);
                 alert('Houve um erro ao enviar o formulário: ' + result.error);
-            }            
-            
+            }
+
         } catch (error) {
             console.error('Erro ao buscar dados:', error);
+            document.getElementById('skeletonCard').style.display = 'none';
+            alert('Erro ao processar os dados: ' + error.message);
         }
     }
 
