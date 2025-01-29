@@ -48,6 +48,29 @@ class AnalyzeEnvironmentalImpactTool(BaseTool):
 
 
 def analyze_environmental_impact(start_date, end_date, instruments, start_time='08:00', end_time='16:00'):
+    """
+    Analisa o impacto de condições ambientais na produção laboratorial.
+
+    Args:
+        start_date (date): Data inicial do período de análise.
+        end_date (date): Data final do período de análise.
+        instruments (list): Lista de objetos de instrumentos com atributos 'id' e 'instrument_name'.
+        start_time (str): Horário diário de início (HH:MM).
+        end_time (str): Horário diário de término (HH:MM).
+
+    Returns:
+        dict: Dicionário com as seguintes métricas de análise:
+            - total_available_hours (float): Total de horas disponíveis no período.
+            - total_downtime (dict): Dicionário com o tempo total de inatividade por instrumento.
+            - event_count (dict): Dicionário com a contagem de eventos por instrumento.
+            - percentage_out_of_limits (dict): Dicionário com a porcentagem de tempo fora dos limites por instrumento.
+            - both_downtime (dict): Dicionário com o tempo de inatividade quando ambos os parâmetros estão fora dos limites.
+            - temp_only_downtime (dict): Dicionário com o tempo de inatividade apenas para temperatura.
+            - humid_only_downtime (dict): Dicionário com o tempo de inatividade apenas para umidade.
+            - both_events (dict): Dicionário com a contagem de eventos quando ambos os parâmetros estão fora dos limites.
+            - temp_only_events (dict): Dicionário com a contagem de eventos apenas para temperatura.
+            - humid_only_events (dict): Dicionário com a contagem de eventos apenas para umidade.
+    """
     # Get instrument IDs
     instrument_ids = [str(inst['id']) for inst in instruments]
 

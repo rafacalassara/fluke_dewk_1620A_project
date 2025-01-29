@@ -2,23 +2,24 @@
 from collections import defaultdict
 import json
 import csv
-from datetime import datetime, time, timedelta, date
+from datetime import datetime, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Min, Max, Avg, F, Q
+from django.db.models import Min, Max, Avg, Q
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.hashers import make_password
-from django.utils.timezone import make_aware
+
+from fluke_data.crews.tools.data_analysis_tools import analyze_environmental_impact
 
 
 from .forms import *
 from .models import *
 from .visa_communication import Instrument
-from .crews.crew import ACImpactAnalysisCrew
+from .crews.crew import ACImpactAnalysisCrew, AnalyticalCrewFlow
 
 User = get_user_model()
 # Check if the user is a manager
@@ -560,16 +561,19 @@ def analyze_with_ai(request):
                        for inst in instruments]
 
         try:
-
-            analysis_crew = ACImpactAnalysisCrew(
+            analysis_report = analyze_environmental_impact(
                 start_date=start_date,
                 end_date=end_date,
                 instruments=instruments,
                 start_time=start_time,
                 end_time=end_time
             )
+            analysis_crew = AnalyticalCrewFlow(
+                analysis_report=analysis_report)
+            response = analysis_crew.kickoff()
+
             # Call the analysis function and parse the JSON string
-            results = json.loads(analysis_crew.run_analysis())
+            results = json.loads(response.pydantic.model_dump_json())
             print("Debug - Analysis results:", results)  # Debug print
 
             return JsonResponse(results, safe=False)
