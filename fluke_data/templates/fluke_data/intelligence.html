@@ -6,8 +6,37 @@
 
 <form method="get" class="form-inline">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Filtrar</button>
+    <div class="row g-3">
+        <!-- Data fields -->
+        <div class="col-md-6">
+            {{ form.start_date.label_tag }}
+            {{ form.start_date }}
+        </div>
+        <div class="col-md-6">
+            {{ form.end_date.label_tag }}
+            {{ form.end_date }}
+        </div>
+
+        <!-- Time fields -->
+        <div class="col-md-6">
+            {{ form.start_time.label_tag }}
+            {{ form.start_time }}
+        </div>
+        <div class="col-md-6">
+            {{ form.end_time.label_tag }}
+            {{ form.end_time }}
+        </div>
+
+        <!-- Instruments field -->
+        <div class="col-12">
+            {{ form.instruments.label_tag }}
+            {{ form.instruments }}
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </div>
+    </div>
 </form>
 
 
@@ -16,7 +45,8 @@
         <h5>Legenda:</h5>
         <ul>
             <h5><strong>Período solicitado:</strong> <span data-analysis-period=""></span>{{ analysis_period }}</h5>
-            <h5><strong>Tempo total disponível:</strong> <span data-time-available=""></span>{{ total_time_available }} horas</h5>
+            <h5><strong>Tempo total disponível:</strong> <span data-time-available=""></span>{{ total_time_available }}
+                horas</h5>
         </ul>
     </div>
 
@@ -41,7 +71,7 @@
             <div class="skeleton center" style="width: 18rem; height: 40px; margin: auto; margin-bottom: 20px;"></div>
             <div class="skeleton ml-3" style="width: 14rem; height: 30px; margin-bottom: 10px;"></div>
             <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
-            <div class="skeleton" style="width: 28rem; height: 20px; margin-bottom: 16px;"></div>        
+            <div class="skeleton" style="width: 28rem; height: 20px; margin-bottom: 16px;"></div>
 
             <h2 class="skeleton ml-3 mb-1 mt-2" style="width: 14rem; height: 30px;"></h2>
             <div class="skeleton ml-2" style="height: 20px; margin-bottom: 10px;"></div>
@@ -58,13 +88,13 @@
             <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
             <div class="skeleton" style="width: 18rem; height: 20px; margin-bottom: 10px;"></div>
         </div>
-        
+
         <div id="dataCard" class="card p-3" style="display: none; width: 32rem;">
             <h1 id="title"></h1>
-            <h2 class="recuo text-start">Resumo</h2>        
+            <h2 class="recuo text-start">Resumo</h2>
             <p id="summary"></p>
 
-            <h2 class="recuo text-start" >Análise</h2>
+            <h2 class="recuo text-start">Análise</h2>
             <p id="analytics" class="recuo text-justify"></p>
 
             <h2 class="recuo text-start">Sugestão</h2>
@@ -79,7 +109,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-    <script src="{% static 'js/intelligence.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="{% static 'js/intelligence.js' %}"></script>
 {% endblock %}

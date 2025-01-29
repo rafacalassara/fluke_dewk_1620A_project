@@ -8,12 +8,7 @@ from pydantic import BaseModel
 
 from .tools.data_analysis_tools import analyze_environmental_impact
 
-# from .tools.data_analysis_tools import (NumpyAnalysisTool, PandasAnalysisTool,
-#                                         StatisticalAnalysisTool,
-#                                         VisualizationTool)
-
-load_dotenv()
-
+load_dotenv('/home/rafaelcalassara/Programming/LRC/fluke_dewk_1620A_project/.env')
 
 class OutputReportFormat(BaseModel):
     title: str
@@ -43,11 +38,10 @@ class ACImpactAnalysisCrew:
                 You are a specialist in thermal analysis with deep knowledge of HVAC 
                 systems and their effects on controlled environments. You excel at 
                 identifying patterns in temperature fluctuations."""),
-            # tools=[self.pandas_tool, self.numpy_tool,
-            #        self.stats_tool, self.viz_tool],
             cache=True,
             verbose=True,
-            model=os.getenv('THERMAL_ANALYST_MODEL', 'gpt-4o-mini')
+            llm=os.getenv('THERMAL_ANALYST_MODEL', 'gpt-4o-mini'),
+            max_rpm=30,
         )
 
         self.humidity_expert = Agent(
@@ -57,10 +51,10 @@ class ACImpactAnalysisCrew:
                 You are a humidity control specialist with expertise in environmental 
                 monitoring. You understand the critical relationship between temperature 
                 and humidity in laboratory settings."""),
-            # tools=[self.pandas_tool, self.stats_tool, self.viz_tool],
             verbose=True,
             cache=True,
-            model=os.getenv('HUMIDITY_EXPERT_MODEL', 'gpt-4o-mini')
+            llm=os.getenv('HUMIDITY_EXPERT_MODEL', 'gpt-4o-mini'),
+            max_rpm=30,
         )
 
         self.productivity_analyst = Agent(
@@ -70,10 +64,10 @@ class ACImpactAnalysisCrew:
                 You are an operational efficiency specialist with experience in 
                 analyzing the impact of environmental factors on laboratory performance.
                 You have expertise in scientific operations management and environmental control."""),
-            # tools=[self.pandas_tool, self.stats_tool],
             verbose=True,
             cache=True,
-            model=os.getenv('PRODUCTIVITY_ANALYST_MODEL', 'gpt-4o-mini')
+            llm=os.getenv('PRODUCTIVITY_ANALYST_MODEL', 'gpt-4o-mini'),
+            max_rpm=30,
         )
 
         self.report_generator = Agent(
@@ -83,11 +77,11 @@ class ACImpactAnalysisCrew:
                 You are a technical report specialist with experience in environmental 
                 control systems. You excel at synthesizing complex data into clear, 
                 actionable insights."""),
-            # tools=[self.pandas_tool, self.viz_tool],
             verbose=True,
             cache=True,
             allow_delegation=True,
-            model=os.getenv('REPORT_GENERATOR_MODEL', 'gpt-4o-mini')
+            llm=os.getenv('REPORT_GENERATOR_MODEL', 'gpt-4o-mini'),
+            max_rpm=30,
         )
 
     def create_tasks(self):
@@ -111,7 +105,6 @@ class ACImpactAnalysisCrew:
             3. Hourly temperature gradients
             4. Correlation with AC cycle'''),
             agent=self.thermal_analyst,
-            # async_execution=True,
         )
 
         analyze_humidity_task_description = dedent(f"""
@@ -135,7 +128,6 @@ class ACImpactAnalysisCrew:
             2. Critical events (peaks/valleys) identified
             3. Variation rates by period
             4. Humidity-temperature correlation'''),
-            # async_execution=True,
         )
 
         analyze_productivity_impact_task_description = dedent("""
@@ -211,7 +203,3 @@ class ACImpactAnalysisCrew:
 
         result = crew.kickoff()
         return result.pydantic.json()
-
-# Example usage:
-# crew = ACImpactAnalysisCrew()
-# results = crew.run_analysis(your_data_frame)

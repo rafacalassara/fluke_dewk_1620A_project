@@ -1,43 +1,17 @@
 document.addEventListener('DOMContentLoaded', async function () {
 
     const form = document.querySelector('form')
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const formData = new FormData(form);
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        try {
-            // Envia os dados usando Fetch API
-            const response = await fetch('/api/data-intelligence/', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': csrfToken  // Adiciona o token CSRF nos headers
-                }
-            });
-
-            // Verifica se a resposta foi bem-sucedida
-            if (response.ok) {
-                const data = await response.json();
-
-                // form.reset()
-
-                // document.getElementById('skeletonCard').style.display = 'block'; 
-                // setLoading();
-                showCharts(data);
-                fetchData(data);
-
-                // alert('Formulário enviado com sucesso!');
-            } else {
-                console.error('Erro ao enviar formulário:', response.statusText);
-                alert('Houve um erro ao enviar o formulário.');
-            }
-        } catch (error) {
-            console.error('Erro na requisição:', error);
-            alert('Erro na requisição.');
-        }
+        getChartData(formData);
+        getAnalysis(formData);
+                
     })
 
     let chartInstance = {};
@@ -162,16 +136,44 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('conclusion').innerText = data.conclusion;
     }
 
-    async function fetchData(data) {
+    async function getChartData(formData) {
+        try {
+            // Envia os dados usando Fetch API
+            const response = await fetch('/api/data-intelligence/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken  // Adiciona o token CSRF nos headers
+                }
+            });
+
+            // Verifica se a resposta foi bem-sucedida
+            if (response.ok) {
+                const data = await response.json();
+                
+                showCharts(data);
+            } else {
+                console.error('Erro ao enviar formulário:', response.statusText);
+                alert('Houve um erro ao enviar o formulário.');
+            }
+        } catch (error) {
+            console.error('Erro na requisição:', error);
+            alert('Erro na requisição.');
+        }
+    }
+    
+    async function getAnalysis(formData) {
         try {
             document.getElementById('skeletonCard').style.display = 'block';
+            document.getElementById('dataCard').style.display = 'none';
 
             const response = await fetch('/api/analyze-with-ai/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // 'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
                 },
-                body: JSON.stringify(data),
+                body: formData,
             });
 
             const result = await response.json();

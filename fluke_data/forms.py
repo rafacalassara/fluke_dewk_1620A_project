@@ -193,11 +193,6 @@ class EnvironmentalAnalysisForm(forms.Form):
             attrs={'type': 'date', 'class': 'form-control'}),
         label='Data Final'
     )
-    instruments = forms.ModelMultipleChoiceField(
-        queryset=ThermohygrometerModel.objects.all().order_by('instrument_name'),
-        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
-        label='Instrumentos'
-    )
     start_time = forms.TimeField(
         widget=forms.TimeInput(
             attrs={'type': 'time', 'class': 'form-control'}),
@@ -210,3 +205,12 @@ class EnvironmentalAnalysisForm(forms.Form):
         initial='16:00',
         label='Horário Final'
     )
+    instruments = forms.ModelMultipleChoiceField(
+        queryset=ThermohygrometerModel.objects.all().order_by('instrument_name'),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        label='Instrumentos'
+    )
+
+    class Meta:
+        field_order = ['start_date', 'end_date',
+                       'start_time', 'end_time', 'instruments']

@@ -406,6 +406,30 @@ def create_certificate(request):
     })
 
 
+def prepara_payload(request):
+    '''
+    Prepara o payload para ser enviado para o AI
+    Retorna: start_date, end_date, start_time, end_time, instruments, ai_data
+    '''
+    form = EnvironmentalAnalysisForm(request.POST or None)
+    if form.is_valid():
+        start_date = form.cleaned_data['start_date']
+        end_date = form.cleaned_data['end_date']
+        start_time = form.cleaned_data['start_time']
+        end_time = form.cleaned_data['end_time']
+        instruments = form.cleaned_data['instruments']
+
+        # Prepare data for AI analysis
+        ai_data = {
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
+            'start_time': start_time.strftime('%H:%M'),
+            'end_time': end_time.strftime('%H:%M'),
+            'instruments': [{'id': inst.id, 'instrument_name': inst.instrument_name} for inst in instruments]
+        }
+        return start_date, end_date, start_time, end_time, instruments, ai_data
+
+
 def out_of_limits_chart(request):
     form = EnvironmentalAnalysisForm(request.POST or None)
     data = []
@@ -506,7 +530,7 @@ def out_of_limits_chart(request):
         'temperature_data': dict(temperature_data),
         'humidity_data': dict(humidity_data),
         'timestamps': sorted(timestamps),  # Lista de timestamps ordenados
-        'ai_data': ai_data if form.is_valid() else None  # Include AI data in response
+        # 'ai_data': ai_data if form.is_valid() else None  # Include AI data in response
     }
 
     return JsonResponse(context)
@@ -523,15 +547,19 @@ def intelligence(request):
 
 @csrf_exempt
 def analyze_with_ai(request):
-    if request.method == 'POST':
-        form_data = json.loads(request.body)
+
+    form = EnvironmentalAnalysisForm(request.POST or None)
+
+    if form.is_valid():
+        start_date = form.cleaned_data['start_date'].strftime('%Y-%m-%d')
+        end_date = form.cleaned_data['end_date'].strftime('%Y-%m-%d')
+        start_time = form.cleaned_data['start_time'].strftime('%H:%M')
+        end_time = form.cleaned_data['end_time'].strftime('%H:%M')
+        instruments = form.cleaned_data['instruments']
+        instruments = [{'id': inst.id, 'instrument_name': inst.instrument_name}
+                       for inst in instruments]
+
         try:
-            # Get form data
-            start_date = form_data['ai_data']['start_date']
-            end_date = form_data['ai_data']['end_date']
-            instruments = form_data['ai_data']['instruments']
-            start_time = form_data['ai_data']['start_time']
-            end_time = form_data['ai_data']['end_time']
 
             analysis_crew = ACImpactAnalysisCrew(
                 start_date=start_date,
@@ -550,57 +578,3 @@ def analyze_with_ai(request):
             return JsonResponse({'error': str(e)})
 
     return render(request, 'fluke_data/intelligence.html')
-
-
-# json = {
-#     'titulo': '',
-#     'resumo': '',
-#     'analise': '',
-#     'sugestoes': '',
-#     'conclusao': ''
-# }
-
-
-# @login_required
-# @user_passes_test(is_manager)
-# def test_environmental_analysis(request):
-#     """
-#     View for environmental impact analysis with form
-#     """
-#     if request.method == 'POST':
-#         form = EnvironmentalAnalysisForm(request.POST)
-#         if form.is_valid():
-#             try:
-#                 # Get form data
-#                 start_date = form.cleaned_data['start_date']
-#                 end_date = form.cleaned_data['end_date']
-#                 instruments = form.cleaned_data['instruments']
-#                 start_time = form.cleaned_data['start_time'].strftime(
-#                     '%H:%M')
-#                 end_time = form.cleaned_data['end_time'].strftime('%H:%M')
-
-#                 # Call the analysis function
-#                 results = analyze_environmental_impact(
-#                     start_date=start_date,
-#                     end_date=end_date,
-#                     instruments=instruments,
-#                     start_time_time=start_time,
-#                     end_time_time=end_time
-#                 )
-
-#                 return render(request, 'fluke_data/environmental_analysis.html', {
-#                     'form': form,
-#                     'results': results
-#                 })
-
-#             except Exception as e:
-#                 return render(request, 'fluke_data/environmental_analysis.html', {
-#                     'form': form,
-#                     'error': str(e)
-#                 })
-#     else:
-#         form = EnvironmentalAnalysisForm()
-
-#     return render(request, 'fluke_data/environmental_analysis.html', {
-#         'form': form
-#     })
