@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'fluke_data',
+    'rest_framework',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -147,3 +149,18 @@ LOGIN_URL = 'login'
 
 # Add this at the end of your settings file
 AUTO_CONNECT_ON_STARTUP = False  # Set to False if you want to disable auto-connect
+
+SWAGGER_SETTINGS = {
+    'DEFAULT_INFO': 'fluke_data.urls.schema_view',
+    'SECURITY_DEFINITIONS': {
+        'Basic': {
+            'type': 'basic'
+        }
+    },
+    'USE_SESSION_AUTH': False,
+    'JSON_EDITOR': True,
+}
+
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': False,
+}

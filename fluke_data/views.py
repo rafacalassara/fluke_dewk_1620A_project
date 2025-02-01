@@ -15,6 +15,10 @@ from django.contrib.auth.hashers import make_password
 
 from fluke_data.crews.tools.data_analysis_tools import analyze_environmental_impact
 
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from drf_yasg import openapi
 
 from .forms import *
 from .models import *
@@ -35,6 +39,29 @@ def real_time_data(request):
     return render(request, 'fluke_data/real_time_data.html')
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Lista todos os termo-higrômetros cadastrados",
+    responses={
+        200: openapi.Response(
+            description="Lista de termo-higrômetros",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'pn': openapi.Schema(type=openapi.TYPE_STRING),
+                        'sn': openapi.Schema(type=openapi.TYPE_STRING),
+                        'instrument_name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'group_name': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            )
+        )
+    }
+)
+@api_view(['GET'])
 def get_thermohygrometers(request):
     thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
     data = [
@@ -49,6 +76,29 @@ def get_thermohygrometers(request):
     return JsonResponse(data, safe=False)
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Lista termo-higrômetros conectados",
+    responses={
+        200: openapi.Response(
+            description="Lista de dispositivos conectados",
+            schema=openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'pn': openapi.Schema(type=openapi.TYPE_STRING),
+                        'sn': openapi.Schema(type=openapi.TYPE_STRING),
+                        'instrument_name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'group_name': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            )
+        )
+    }
+)
+@api_view(['GET'])
 def get_connected_thermohygrometers(request):
     thermohygrometers = ThermohygrometerModel.objects.all().filter(
         is_connected=True).order_by('instrument_name')
@@ -86,9 +136,24 @@ def update_thermohygrometer(request, pk):
     return render(request, 'fluke_data/thermohygrometer/update_thermohygrometer.html', {'form': form, 'thermohygrometer': thermohygrometer})
 
 
-@login_required
-@user_passes_test(is_manager)
-@csrf_exempt
+@swagger_auto_schema(
+    method='post',
+    operation_description="Adiciona um novo termo-higrômetro",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'model', 'serial_number'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING),
+            'model': openapi.Schema(type=openapi.TYPE_STRING),
+            'serial_number': openapi.Schema(type=openapi.TYPE_STRING),
+        },
+    ),
+    responses={
+        201: 'Dispositivo criado com sucesso',
+        400: 'Dados inválidos'
+    }
+)
+@api_view(['POST'])
 def add_thermohygrometer(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -121,6 +186,23 @@ def add_thermohygrometer(request):
         instrument.disconnect()
 
 
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Exclui um termo-higrômetro",
+    manual_parameters=[
+        openapi.Parameter(
+            'id',
+            openapi.IN_PATH,
+            description="ID do termo-higrômetro",
+            type=openapi.TYPE_INTEGER
+        )
+    ],
+    responses={
+        200: 'Dispositivo excluído com sucesso',
+        404: 'Dispositivo não encontrado'
+    }
+)
+@api_view(['DELETE'])
 @login_required
 @user_passes_test(is_manager)
 @csrf_exempt
@@ -217,6 +299,27 @@ def data_visualization(request):
     return render(request, 'fluke_data/data_visualization.html', context)
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Exporta dados para CSV",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['instrument_id', 'start_date',
+                  'start_time', 'end_date', 'end_time'],
+        properties={
+            'instrument_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'start_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
+            'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time'),
+            'end_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
+            'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time'),
+        }
+    ),
+    responses={
+        200: openapi.Response(description="Arquivo CSV"),
+        400: 'Parâmetros inválidos'
+    }
+)
+@api_view(['POST'])
 def export_to_csv(request):
     instrument_id = request.POST.get('instrument_id')
     start_date = request.POST.get('start_date')
@@ -333,27 +436,6 @@ def login_view(request):
     return render(request, 'fluke_data/login.html', {'form': form})
 
 
-def intelligence2(request):
-    # Buscar dados
-    measures = MeasuresModel.objects.all().values(
-        'id', 'temperature', 'humidity', 'date',
-        'instrument_id', 'corrected_temperature',
-        'corrected_humidity'
-    )
-
-    instruments = ThermohygrometerModel.objects.all().values(
-        'id', 'instrument_name', 'group_name'
-    )
-
-    # Converter para JSON
-    measures_json = json.dumps(list(measures), default=str)
-
-    return render(request, 'fluke_data/intelligence2.html', {
-        'measures': measures_json,
-        'instruments': instruments,
-    })
-
-
 @login_required
 @user_passes_test(is_manager)
 def delete_certificate(request, cert_pk):
@@ -431,6 +513,54 @@ def prepara_payload(request):
         return start_date, end_date, start_time, end_time, instruments, ai_data
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Gera dados para gráfico de limites",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['start_date', 'end_date',
+                  'start_time', 'end_time', 'instruments'],
+        properties={
+            'start_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
+            'end_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
+            'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time'),
+            'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time'),
+            'instruments': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(type=openapi.TYPE_INTEGER)
+            )
+        }
+    ),
+    responses={
+        200: openapi.Response(
+            description="Dados para análise",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'data': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'instrument_name': openapi.Schema(type=openapi.TYPE_STRING),
+                                'percent_out_of_limits': openapi.Schema(type=openapi.TYPE_NUMBER)
+                            }
+                        )
+                    ),
+                    'total_time_available': openapi.Schema(type=openapi.TYPE_NUMBER),
+                    'analysis_period': openapi.Schema(type=openapi.TYPE_STRING),
+                    'temperature_data': openapi.Schema(type=openapi.TYPE_OBJECT),
+                    'humidity_data': openapi.Schema(type=openapi.TYPE_OBJECT),
+                    'timestamps': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_STRING))
+                }
+            )
+        ),
+        400: 'Dados inválidos'
+    }
+)
+@api_view(['POST'])
+@login_required
+@user_passes_test(is_manager)
 def out_of_limits_chart(request):
     form = EnvironmentalAnalysisForm(request.POST or None)
     data = []
@@ -537,6 +667,8 @@ def out_of_limits_chart(request):
     return JsonResponse(context)
 
 
+@login_required
+@user_passes_test(is_manager)
 def intelligence(request):
     form = EnvironmentalAnalysisForm(request.GET or None)
     context = {
@@ -546,6 +678,43 @@ def intelligence(request):
     return render(request, 'fluke_data/intelligence.html', context)
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Executa análise com IA",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['start_date', 'end_date',
+                  'start_time', 'end_time', 'instruments'],
+        properties={
+            'start_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
+            'end_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
+            'start_time': openapi.Schema(type=openapi.TYPE_STRING, format='time'),
+            'end_time': openapi.Schema(type=openapi.TYPE_STRING, format='time'),
+            'instruments': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(type=openapi.TYPE_INTEGER)
+            )
+        }
+    ),
+    responses={
+        200: openapi.Response(
+            description="Resultado da análise",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'analysis_report': openapi.Schema(type=openapi.TYPE_STRING),
+                    'recommendations': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_STRING)),
+                    'risk_assessment': openapi.Schema(type=openapi.TYPE_STRING),
+                    'compliance_status': openapi.Schema(type=openapi.TYPE_STRING)
+                }
+            )
+        ),
+        400: 'Erro na análise'
+    }
+)
+@api_view(['POST'])
+@login_required
+@user_passes_test(is_manager)
 @csrf_exempt
 def analyze_with_ai(request):
 
