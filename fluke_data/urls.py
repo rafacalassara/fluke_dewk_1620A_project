@@ -1,9 +1,11 @@
 # fluke_data/urls.py
-from django.urls import path
+from django.urls import path, include
+from django.views.generic import TemplateView
 from . import views
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from .api import urls as api_urls
 
 # Adicione esta configuração antes das URL patterns
 schema_view = get_schema_view(
@@ -20,43 +22,35 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('', views.display_measures, name='display_measures'),
-    path('get_thermohygrometers/', views.get_thermohygrometers,
-         name='get_thermohygrometers'),
-    path('get_connected_thermohygrometers/', views.get_connected_thermohygrometers,
-         name='get_connected_thermohygrometers'),
-    path('manage_thermohygrometers/', views.manage_thermohygrometers,
+    # Regular views
+    path('', views.RealTimeDataView.as_view(), name='real_time_data'),
+    path('manage-thermohygrometers/', views.ManageThermohygrometersView.as_view(),
          name='manage_thermohygrometers'),
-    path('update_thermohygrometer/<int:pk>/',
-         views.update_thermohygrometer, name='update_thermohygrometer'),
-    path('api/add_thermohygrometer/', views.add_thermohygrometer,
-         name='add_thermohygrometer'),
-    path('api/delete_thermohygrometer/<int:id>/',
-         views.delete_thermohygrometer, name='delete_thermohygrometer'),
-    path('data_visualization/', views.data_visualization,
+    path('update-thermohygrometer/<int:pk>/',
+         views.UpdateThermohygrometerView.as_view(), name='update_thermohygrometer'),
+    path('data-visualization/', views.DataVisualizationView.as_view(),
          name='data_visualization'),
-    path('export-to-csv/', views.export_to_csv, name='export_to_csv'),
-    path('real_time_data/', views.real_time_data, name='real_time_data'),
-    path('manage_users/', views.manage_users, name='manage_users'),
-    path('create_user/', views.create_user, name='create_user'),
-    path('update_user/<int:user_id>/', views.update_user, name='update_user'),
-    path('delete_user/<int:user_id>/', views.delete_user, name='delete_user'),
-    path('login/', views.login_view, name='login'),
+    path('display-measures/', views.DisplayMeasuresView.as_view(),
+         name='display_measures'),
 
-    # Update certificate URLs to simpler paths
-    path('certificates/delete/<int:cert_pk>/',
-         views.delete_certificate, name='delete_certificate'),
-    path('manage_certificates/', views.manage_all_certificates,
+    # User management
+    path('manage-users/', views.ManageUsersView.as_view(), name='manage_users'),
+    path('create-user/', views.CreateUserView.as_view(), name='create_user'),
+    path('update-user/<int:pk>/', views.UpdateUserView.as_view(), name='update_user'),
+    path('delete-user/<int:pk>/', views.DeleteUserView.as_view(), name='delete_user'),
+    path('login/', views.LoginView.as_view(), name='login'),
+
+    # Certificate management (using API)
+    path('manage-certificates/', views.ManageCertificatesView.as_view(),
          name='manage_all_certificates'),
-    path('certificates/create/', views.create_certificate,
+    path('create-certificate/', views.CreateCertificateView.as_view(),
          name='create_certificate'),
 
     # Intelligence
-    path('intelligence/', views.intelligence, name='intelligence'),
-    path('api/data-intelligence/', views.out_of_limits_chart,
-         name='data_intelligence'),  # retorno json - dados
-    path('api/analyze-with-ai/', views.analyze_with_ai,
-         name='analyze_with_ai'),  # retorno json - resultado de dados
+    path('intelligence/', views.IntelligenceView.as_view(), name='intelligence'),
+
+    # API endpoints
+    path('api/', include(api_urls)),
 
     # Swagger/OpenAPI URLs
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0),

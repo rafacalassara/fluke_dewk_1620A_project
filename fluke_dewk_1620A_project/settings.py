@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'fluke_data',
+    'fluke_data.apps.FlukeDataConfig',
     'rest_framework',
     'drf_yasg',
 ]

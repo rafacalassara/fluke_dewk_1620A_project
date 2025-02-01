@@ -1,12 +1,13 @@
 // static/js/main.js
 
 let thermohygrometerConnections = {};
-const RECONNECT_DELAY = 5000; // Time in milliseconds to wait before trying to reconnect
-const MAX_RECONNECT_ATTEMPTS = 3; // Number of times to attempt reconnection
+const RECONNECT_DELAY = 5000;
+const MAX_RECONNECT_ATTEMPTS = 3;
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     try {
-        const response = await fetch('/get_thermohygrometers/');
+        // Aqui devemos usar a URL normal, não a de conectados, pois queremos listar todos
+        const response = await fetch('/api/thermohygrometers/');
         const thermohygrometers = await response.json();
         const dropdown = document.getElementById('thermohygrometer');
         thermohygrometers.forEach(thermo => {
@@ -34,8 +35,7 @@ async function addThermohygrometer() {
     const resultDiv = document.createElement('div');
     resultDiv.id = `result-${selectedThermohygrometer}`;
     resultDiv.className = 'result';
-    const thermoName = selectedInstrumentName.split(' - ')[0]; // Instrument Name
-    const thermoPNSN = selectedInstrumentName.split(' - ')[1]; // PN and SN
+    const [thermoName, thermoPNSN] = selectedInstrumentName.split(' - ');
 
     const connectingMessage = document.createElement('p');
     connectingMessage.textContent = 'Connecting...';
@@ -51,94 +51,82 @@ async function addThermohygrometer() {
     resultContainer.appendChild(resultDiv);
 
     let reconnectAttempts = 0;
-    const MAX_RECONNECT_ATTEMPTS = 3;
-    const RECONNECT_DELAY = 5000; // 5 seconds delay for reconnection attempts
 
     function createWebSocket() {
         const ws = new WebSocket(`ws://${window.location.host}/ws/data/${selectedThermohygrometer}/`);
-        
+
         thermohygrometerConnections[selectedThermohygrometer] = ws;
 
-        ws.onopen = function() {
+        ws.onopen = function () {
             console.log(`WebSocket connection opened for ${selectedInstrumentName}`);
             resultDiv.removeChild(connectingMessage);
         };
 
-        ws.onmessage = function(event) {
+        ws.onmessage = function (event) {
             const data = JSON.parse(event.data);
             if (data.error) {
                 console.log(data.error);
-            } else if (!data.data || typeof data.data.temperature === 'undefined' || typeof data.data.humidity === 'undefined') {
-                console.log(`Data missing for ${selectedInstrumentName}.`);
-            } else {
-                // Get temperature and humidity values
-                const temperature = data.data.temperature;
-                const correctedTemperature = data.data.corrected_temperature;
-                const humidity = data.data.humidity;
-                const correctedHumidity = data.data.corrected_humidity;
-
-                // Retrieve limits, using a fallback value if they are not defined in the database
-                // console.log(typeof data.data.thermo_info.min_humidity);
-                const minTemperature = data.data.thermo_info.min_temperature !== null ? data.data.thermo_info.min_temperature : -Infinity;
-                const maxTemperature = data.data.thermo_info.max_temperature !== null ? data.data.thermo_info.max_temperature : Infinity;
-                const minHumidity = data.data.thermo_info.min_humidity !== null ? data.data.thermo_info.min_humidity : -Infinity;
-                const maxHumidity = data.data.thermo_info.max_humidity !== null ? data.data.thermo_info.max_humidity : Infinity;
-
-                // Check if temperature or humidity are outside of the acceptable range
-                const temperatureStyle = (temperature < minTemperature || temperature > maxTemperature) ? 'color: red;' : 'color: black;';
-                const correctedTemperatureStyle = (correctedTemperature < minTemperature || correctedTemperature > maxTemperature) ? 'color: red;' : 'color: black;';
-                const humidityStyle = (humidity < minHumidity || humidity > maxHumidity) ? 'color: red;' : 'color: black;';
-                const correctedHumidityStyle = (correctedHumidity < minHumidity || correctedHumidity > maxHumidity) ? 'color: red;' : 'color: black;';
-
-
-                let formattedData = `
-                    <table>
-                        <tr>
-                            <th></th>
-                            <th>Non Corrected</th>
-                            <th>Corrected</th>
-                        </tr>
-                        <tr>
-                            <td><strong>Temperature</strong></td>
-                            <td style="${temperatureStyle}">${temperature} °C</td>
-                            <td style="${correctedTemperatureStyle}">${correctedTemperature} °C</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Humidity</strong></td>
-                            <td style="${humidityStyle}">${humidity} %</td>
-                            <td style="${correctedHumidityStyle}">${correctedHumidity} %</td>
-                        </tr>
-                    </table>
-                `;
-
-                if (data.data.date) {
-                    formattedData += `<p><strong>Instrument Date:</strong> ${data.data.date}</p>`;
-                }
-
-                formattedData += `<button onclick="closeConnection('${selectedThermohygrometer}')">Close Connection</button>`;
-
-                // Update the resultDiv with new data and styles
-                resultDiv.innerHTML = resultHeader.outerHTML + resultSubHeader.outerHTML + formattedData;
-
-                // If limits are available, display them in the console (for debug purposes)
-                // console.log(`Temperature limits: Min = ${minTemperature}, Max = ${maxTemperature}`);
-                // console.log(`Humidity limits: Min = ${minHumidity}, Max = ${maxHumidity}`);
+                return;
             }
+
+            if (!data.data?.temperature || !data.data?.humidity) {
+                console.log(`Data missing for ${selectedInstrumentName}.`);
+                return;
+            }
+
+            const { temperature, corrected_temperature, humidity, corrected_humidity, date, thermo_info } = data.data;
+
+            // Retrieve limits, using a fallback value if they are not defined in the database
+            const minTemperature = thermo_info.min_temperature ?? -Infinity;
+            const maxTemperature = thermo_info.max_temperature ?? Infinity;
+            const minHumidity = thermo_info.min_humidity ?? -Infinity;
+            const maxHumidity = thermo_info.max_humidity ?? Infinity;
+
+            // Check if values are outside of the acceptable range
+            const getStyle = (value, min, max) => (value < min || value > max) ? 'color: red;' : 'color: black;';
+            const temperatureStyle = getStyle(temperature, minTemperature, maxTemperature);
+            const correctedTemperatureStyle = getStyle(corrected_temperature, minTemperature, maxTemperature);
+            const humidityStyle = getStyle(humidity, minHumidity, maxHumidity);
+            const correctedHumidityStyle = getStyle(corrected_humidity, minHumidity, maxHumidity);
+
+            let formattedData = `
+                <table>
+                    <tr>
+                        <th></th>
+                        <th>Non Corrected</th>
+                        <th>Corrected</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Temperature</strong></td>
+                        <td style="${temperatureStyle}">${temperature} °C</td>
+                        <td style="${correctedTemperatureStyle}">${corrected_temperature} °C</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Humidity</strong></td>
+                        <td style="${humidityStyle}">${humidity} %</td>
+                        <td style="${correctedHumidityStyle}">${corrected_humidity} %</td>
+                    </tr>
+                </table>
+                ${date ? `<p><strong>Instrument Date:</strong> ${date}</p>` : ''}
+                <button onclick="closeConnection('${selectedThermohygrometer}')">Close Connection</button>
+            `;
+
+            // Update the resultDiv with new data and styles
+            resultDiv.innerHTML = resultHeader.outerHTML + resultSubHeader.outerHTML + formattedData;
         };
 
-        ws.onerror = function(error) {
+        ws.onerror = function (error) {
             console.error(`WebSocket error for ${selectedInstrumentName}:`, error);
             handleReconnection();
         };
 
-        ws.onclose = function() {
+        ws.onclose = function () {
             console.log(`WebSocket connection closed for ${selectedInstrumentName}`);
             handleReconnection();
         };
     }
 
     function handleReconnection() {
-        // Clear any existing reconnect messages
         resultDiv.querySelectorAll('.reconnect-message').forEach(msg => msg.remove());
 
         const reconnectMessage = document.createElement('p');
@@ -150,12 +138,10 @@ async function addThermohygrometer() {
         reconnectAttempts += 1;
 
         if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
-            setTimeout(createWebSocket, RECONNECT_DELAY); // Attempt to reconnect after a delay
+            setTimeout(createWebSocket, RECONNECT_DELAY);
         } else {
-            // Clear any existing reconnect messages
             resultDiv.querySelectorAll('.reconnect-message').forEach(msg => msg.remove());
 
-            // Check if the failure message and remove button are already present
             if (!resultDiv.querySelector('.failure-message')) {
                 const failureMessage = document.createElement('p');
                 failureMessage.className = 'failure-message';
@@ -164,9 +150,7 @@ async function addThermohygrometer() {
 
                 const removeButton = document.createElement('button');
                 removeButton.textContent = 'Remove Instrument';
-                removeButton.onclick = function() {
-                    removeInstrument(selectedThermohygrometer);
-                };
+                removeButton.onclick = () => removeInstrument(selectedThermohygrometer);
                 resultDiv.appendChild(removeButton);
             }
         }
@@ -176,28 +160,22 @@ async function addThermohygrometer() {
 }
 
 function closeConnection(id) {
-    if (thermohygrometerConnections[id]) {
-        // Ensure the WebSocket connection exists before sending the disconnect command
-        if (thermohygrometerConnections[id].readyState === WebSocket.OPEN) {
-            thermohygrometerConnections[id].send(JSON.stringify({ command: 'disconnect' }));
+    const connection = thermohygrometerConnections[id];
+    if (connection) {
+        if (connection.readyState === WebSocket.OPEN) {
+            connection.send(JSON.stringify({ command: 'disconnect' }));
         }
-
-        // Assign a function to handle the close event
-        thermohygrometerConnections[id].onclose = function() {
+        connection.onclose = () => {
             console.log(`WebSocket connection closed for instrument with id: ${id}`);
             removeResultDiv(id);
         };
-
-        // Close the WebSocket connection
-        thermohygrometerConnections[id].close();
+        connection.close();
     } else {
-        // Handle the case where the WebSocket connection might not exist
         console.log(`No active WebSocket connection found for instrument with id: ${id}`);
         removeResultDiv(id);
     }
 }
 
-// Helper function to remove the result HTML
 function removeResultDiv(id) {
     const resultDiv = document.getElementById(`result-${id}`);
     if (resultDiv) {
@@ -208,7 +186,6 @@ function removeResultDiv(id) {
     delete thermohygrometerConnections[id];
 }
 
-// Function to remove the instrument from the UI and delete the connection
 function removeInstrument(id) {
     removeResultDiv(id);
 }

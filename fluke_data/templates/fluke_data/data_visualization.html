@@ -5,151 +5,192 @@
 {% block title %}Data Visualization{% endblock %}
 
 {% block content %}
-  <h1>Data Visualization</h1>
+<h1>Data Visualization</h1>
 
-  <div class="container">
-    <!-- Form Section -->
-    <div class="form-section">
-      <form method="post">
-        {% csrf_token %}
+<div class="container">
+  <!-- Form Section -->
+  <div class="form-section">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="instrument">Select Instrument:</label>
+        <select id="instrument" name="instrument">
+          {% for thermohygrometer in thermohygrometers %}
+          <option value="{{ thermohygrometer.id }}">
+            {{ thermohygrometer.instrument_name }} (PN: {{ thermohygrometer.pn }}, SN: {{ thermohygrometer.sn }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="select-data-container">
         <div class="form-group">
-          <label for="instrument">Select Instrument:</label>
-          <select id="instrument" name="instrument">
-            {% for thermohygrometer in thermohygrometers %}
-              <option value="{{ thermohygrometer.id }}">{{ thermohygrometer.instrument_name }} (PN: {{ thermohygrometer.pn }}, SN: {{ thermohygrometer.sn }})</option>
-            {% endfor %}
-          </select>
+          <label for="start_date">Start Date:</label>
+          <input type="date" id="start_date" name="start_date">
+          <label for="start_time">Start Time:</label>
+          <input type="time" id="start_time" name="start_time" value="08:00">
         </div>
-        <div class="select-data-container">
-          <div class="form-group">
-            <label for="start_date">Start Date:</label>
-            <input type="date" id="start_date" name="start_date">
-            <label for="start_time">Start Time:</label>
-            <input type="time" id="start_time" name="start_time" value="08:00">
-          </div>
-          <div class="form-group">
-            <label for="end_date">End Date:</label>
-            <input type="date" id="end_date" name="end_date">
-            <label for="end_time">End Time:</label>
-            <input type="time" id="end_time" name="end_time" value="16:00">
-          </div>
+        <div class="form-group">
+          <label for="end_date">End Date:</label>
+          <input type="date" id="end_date" name="end_date">
+          <label for="end_time">End Time:</label>
+          <input type="time" id="end_time" name="end_time" value="16:00">
         </div>
-        <button type="submit">Submit</button>
-      </form>
+      </div>
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</div>
+
+{% if data %}
+<div class="data-section">
+  <!-- Container for Export Button, Measured Data, and Statistics -->
+  <h2>Measured Data</h2>
+  <div class="measured-data-container">
+    <div class="column">
+      <h3><strong>Instrument</strong></h3>
+      <p>{{ selected_instrument.instrument_name }} (PN: {{ selected_instrument.pn }}, SN: {{ selected_instrument.sn }})
+      </p>
+      <p><strong>Searched Date Range</strong>
+      <p><strong>From:</strong> {{ start_date }} {{ start_time }}
+      <p><strong>To:</strong> {{ end_date }} {{ end_time }}</p>
+
+      <!-- Export to CSV Button Section -->
+      <div class="export-section">
+        <button onclick="exportToCSV()" class="btn btn-primary">Export to .CSV</button>
+      </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="column">
+      <h3>Statistics for Data Range</h3>
+      <table>
+        <thead style="position: sticky; top: 0; background-color: white;">
+          <tr>
+            <th></th>
+            <th colspan="2">Temperature (°C)</th>
+            <th colspan="2">Humidity (%)</th>
+          </tr>
+          <tr>
+            <th></th>
+            <th>NON CORRECTED</th>
+            <th>CORRECTED</th>
+            <th>NON CORRECTED</th>
+            <th>CORRECTED</th>
+          </tr>
+        </thead>
+        <tr>
+          <td><strong>Min</strong></td>
+          <td>{{ stats.min_temperature|floatformat:1 }}</td>
+          <td>{{ stats.corrected_min_temperature|floatformat:1 }}</td>
+          <td>{{ stats.min_humidity|floatformat:0 }}</td>
+          <td>{{ stats.corrected_min_humidity|floatformat:0 }}</td>
+          {% if stats.corrected_min_temperature == 'No Calibration Certificate' %}
+          {% endif %}
+        </tr>
+        <tr>
+          <td><strong>Max</strong></td>
+          <td>{{ stats.max_temperature|floatformat:1 }}</td>
+          <td>{{ stats.corrected_max_temperature|floatformat:1 }}</td>
+          <td>{{ stats.max_humidity|floatformat:0 }}</td>
+          <td>{{ stats.corrected_max_humidity|floatformat:0 }}</td>
+          {% if stats.corrected_max_temperature == 'No Calibration Certificate' %}
+          {% endif %}
+        </tr>
+        <tr>
+          <td><strong>Avg</strong></td>
+          <td>{{ stats.avg_temperature|floatformat:1 }}</td>
+          <td>{{ stats.corrected_avg_temperature|floatformat:1 }}</td>
+          <td>{{ stats.avg_humidity|floatformat:0 }}</td>
+          <td>{{ stats.corrected_avg_humidity|floatformat:0 }}</td>
+          {% if stats.corrected_avg_temperature == 'No Calibration Certificate' %}
+          {% endif %}
+        </tr>
+      </table>
     </div>
   </div>
 
-  {% if data %}
-    <div class="data-section">
-      <!-- Container for Export Button, Measured Data, and Statistics -->
-      <h2>Measured Data</h2>
-      <div class="measured-data-container">
-        <div class="column">
-          <h3><strong>Instrument</strong></h3> 
-          <p>{{ selected_instrument.instrument_name }} (PN: {{ selected_instrument.pn }}, SN: {{ selected_instrument.sn }})</p>
-          <p><strong>Searched Date Range</strong>
-          <p><strong>From:</strong> {{ start_date }} {{ start_time }}
-          <p><strong>To:</strong> {{ end_date }} {{ end_time }}</p>
-
-          <!-- Export to CSV Button Section -->
-          <div class="export-section">
-            <form method="post" action="{% url 'export_to_csv' %}">
-              {% csrf_token %}
-              <input type="hidden" name="instrument_id" value="{{ selected_instrument.id }}">
-              <input type="hidden" name="start_date" value="{{ start_date }}">
-              <input type="hidden" name="start_time" value="{{ start_time }}">
-              <input type="hidden" name="end_date" value="{{ end_date }}">
-              <input type="hidden" name="end_time" value="{{ end_time }}">
-              <button type="submit">Export to .CSV</button>
-            </form>
-          </div>
-        </div>
-
-        <!-- Statistics Section -->
-        <div class="column">
-          <h3>Statistics for Data Range</h3>
-          <table>
-            <thead style="position: sticky; top: 0; background-color: white;">
-              <tr>
-                <th></th>
-                <th colspan="2">Temperature (°C)</th>
-                <th colspan="2">Humidity (%)</th>
-              </tr>
-              <tr>
-                <th></th>
-                <th>NON CORRECTED</th>
-                <th>CORRECTED</th>
-                <th>NON CORRECTED</th>
-                <th>CORRECTED</th>
-              </tr>
-            </thead>
-            <tr>
-              <td><strong>Min</strong></td>
-              <td>{{ stats.min_temperature|floatformat:1 }}</td>
-              <td>{{ stats.corrected_min_temperature|floatformat:1 }}</td>
-              <td>{{ stats.min_humidity|floatformat:0 }}</td>
-              <td>{{ stats.corrected_min_humidity|floatformat:0 }}</td>
-              {% if stats.corrected_min_temperature == 'No Calibration Certificate' %}
-              {% endif %}
-            </tr>
-            <tr>
-              <td><strong>Max</strong></td>
-              <td>{{ stats.max_temperature|floatformat:1 }}</td>
-              <td>{{ stats.corrected_max_temperature|floatformat:1 }}</td>
-              <td>{{ stats.max_humidity|floatformat:0  }}</td>
-              <td>{{ stats.corrected_max_humidity|floatformat:0  }}</td>
-              {% if stats.corrected_max_temperature == 'No Calibration Certificate' %}
-              {% endif %}
-            </tr>
-            <tr>
-              <td><strong>Avg</strong></td>
-              <td>{{ stats.avg_temperature|floatformat:1 }}</td>
-              <td>{{ stats.corrected_avg_temperature|floatformat:1 }}</td>
-              <td>{{ stats.avg_humidity|floatformat:0 }}</td>
-              <td>{{ stats.corrected_avg_humidity|floatformat:0 }}</td>
-              {% if stats.corrected_avg_temperature == 'No Calibration Certificate' %}
-              {% endif %}
-            </tr>
-          </table>
-        </div>
-      </div>
-
-      <!-- Data Table Section -->
-      <div class="data-table-section">
-        <div style="max-height: 400px; overflow-y: scroll; position: relative;">
-          <table>
-            <thead style="position: sticky; top: 0; background-color: white;">
-              <tr>
-                <th>Date</th>
-                <th colspan="2">Temperature (°C)</th>
-                <th colspan="2">Humidity (%)</th>
-              </tr>
-              <tr>
-                <th></th>
-                <th>NON CORRECTED</th>
-                <th>CORRECTED</th>
-                <th>NON CORRECTED</th>
-                <th>CORRECTED</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for measure in data %}
-                <tr>
-                  <td>{{ measure.date|date:"d/m/Y H:i" }}</td>
-                  <td>{{ measure.temperature }}</td>
-                  <td>{{ measure.corrected_temperature }}</td>
-                  <td>{{ measure.humidity }}</td>
-                  <td>{{ measure.corrected_humidity }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <!-- Data Table Section -->
+  <div class="data-table-section">
+    <div style="max-height: 400px; overflow-y: scroll; position: relative;">
+      <table>
+        <thead style="position: sticky; top: 0; background-color: white;">
+          <tr>
+            <th>Date</th>
+            <th colspan="2">Temperature (°C)</th>
+            <th colspan="2">Humidity (%)</th>
+          </tr>
+          <tr>
+            <th></th>
+            <th>NON CORRECTED</th>
+            <th>CORRECTED</th>
+            <th>NON CORRECTED</th>
+            <th>CORRECTED</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for measure in data %}
+          <tr>
+            <td>{{ measure.date|date:"d/m/Y H:i" }}</td>
+            <td>{{ measure.temperature }}</td>
+            <td>{{ measure.corrected_temperature }}</td>
+            <td>{{ measure.humidity }}</td>
+            <td>{{ measure.corrected_humidity }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  {% else %}
-    {% if request.method == 'POST' %}
-      <p>No data found for the selected instrument and time range.</p>
-    {% endif %}
-  {% endif %}
+  </div>
+</div>
+{% else %}
+{% if request.method == 'POST' %}
+<p>No data found for the selected instrument and time range.</p>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function exportToCSV() {
+    try {
+      const response = await fetch('/api/export/export_to_csv/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          instrument_id: {{ selected_instrument.id }},
+          start_date: '{{ start_date }}',
+          start_time: '{{ start_time }}',
+          end_date: '{{ end_date }}',
+          end_time: '{{ end_time }}'
+        })
+      });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to export data');
+  }
+
+  // Criar um blob a partir da resposta
+  const blob = await response.blob();
+
+  // Criar um link temporário para download
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `measured_data_{{ selected_instrument.instrument_name }}_{{ start_date }}_{{ end_date }}.csv`;
+  document.body.appendChild(a);
+  a.click();
+
+  // Limpar
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+    } catch (error) {
+    console.error('Error:', error);
+    alert('Error exporting data: ' + error.message);
+  }
+}
+</script>
 {% endblock %}
