@@ -1,14 +1,15 @@
 # fluke_data/consumers.py
 
-import json
 import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
+import json
 from datetime import datetime, timedelta
-from .visa_communication import Instrument
-from .models import *
 
-from .connection_manager import InstrumentConnectionManager
+from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+from .models import *
+from .visa_communication import Instrument
+
 
 class DataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
