@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function getChartData(data) {
         try {
-            const response = await fetch('/api/environmental-analysis/out_of_limits_chart/', {
+            const response = await fetch('/api/v1/environmental-analysis/out-of-limits-chart/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById('skeletonCard').style.display = 'block';
             document.getElementById('dataCard').style.display = 'none';
 
-            const response = await fetch('/api/environmental-analysis/analyze_with_ai/', {
+            const response = await fetch('/api/v1/environmental-analysis/analyze-with-ai/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

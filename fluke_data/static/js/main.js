@@ -7,7 +7,7 @@ const MAX_RECONNECT_ATTEMPTS = 3;
 document.addEventListener('DOMContentLoaded', async function () {
     try {
         // Aqui devemos usar a URL normal, não a de conectados, pois queremos listar todos
-        const response = await fetch('/api/thermohygrometers/');
+        const response = await fetch('/api/v1/thermohygrometers/');
         const thermohygrometers = await response.json();
         const dropdown = document.getElementById('thermohygrometer');
         thermohygrometers.forEach(thermo => {

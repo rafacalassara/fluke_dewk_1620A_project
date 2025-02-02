@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const measuresContainer = document.getElementById('measures-container');
 
     try {
-        const response = await fetch('/api/thermohygrometers/connected/');
+        const response = await fetch('/api/v1/thermohygrometers/connected/');
         const thermohygrometers = await response.json();
 
         thermohygrometers.forEach(thermo => {

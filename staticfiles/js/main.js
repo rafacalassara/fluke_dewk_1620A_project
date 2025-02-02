@@ -6,7 +6,7 @@ const MAX_RECONNECT_ATTEMPTS = 3; // Number of times to attempt reconnection
 
 document.addEventListener('DOMContentLoaded', async function () {
     try {
-        const response = await fetch('/api/thermohygrometers/connected/');
+        const response = await fetch('/api/v1/thermohygrometers/connected/');
         const thermohygrometers = await response.json();
         const dropdown = document.getElementById('thermohygrometer');
         thermohygrometers.forEach(thermo => {

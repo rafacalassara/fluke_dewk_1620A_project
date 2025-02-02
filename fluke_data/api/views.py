@@ -15,6 +15,7 @@ from rest_framework.authentication import (
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.versioning import URLPathVersioning
 
 from fluke_data.crews.crew import AnalyticalCrewFlow
 from fluke_data.crews.tools.data_analysis_tools import (
@@ -31,6 +32,12 @@ from fluke_data.visa_communication import Instrument
 class ThermohygrometerViewSet(viewsets.ViewSet):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
+    versioning_class = URLPathVersioning
+
+    def get_versioned_response(self, request, data):
+        if request.version == 'v1':
+            return data
+        return data
 
     @swagger_auto_schema(
         operation_description="Lista todos os termo-higrômetros cadastrados",
@@ -64,7 +71,7 @@ class ThermohygrometerViewSet(viewsets.ViewSet):
                 'group_name': thermo.group_name,
             }
             for thermo in thermohygrometers]
-        return Response(data)
+        return Response(self.get_versioned_response(request, data))
 
     @swagger_auto_schema(
         operation_description="Lista termo-higrômetros conectados",
@@ -100,7 +107,7 @@ class ThermohygrometerViewSet(viewsets.ViewSet):
                 'group_name': thermo.group_name,
             }
             for thermo in thermohygrometers]
-        return Response(data)
+        return Response(self.get_versioned_response(request, data))
 
     @swagger_auto_schema(
         operation_description="Adiciona um novo termo-higrômetro",
@@ -123,7 +130,8 @@ class ThermohygrometerViewSet(viewsets.ViewSet):
             instrument.connect()
         except:
             return Response(
-                {'error': 'Instrument not found on given IP address.'},
+                self.get_versioned_response(
+                    request, {'error': 'Instrument not found on given IP address.'}),
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -141,10 +149,14 @@ class ThermohygrometerViewSet(viewsets.ViewSet):
                     sn=sn,
                     group_name=group_name
                 )
-                return Response({'success': True}, status=status.HTTP_201_CREATED)
+                return Response(
+                    self.get_versioned_response(request, {'success': True}),
+                    status=status.HTTP_201_CREATED
+                )
         except:
             return Response(
-                {'error': 'Error adding to database.'},
+                self.get_versioned_response(
+                    request, {'error': 'Error adding to database.'}),
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -161,10 +173,11 @@ class ThermohygrometerViewSet(viewsets.ViewSet):
         try:
             thermo = ThermohygrometerModel.objects.get(id=pk)
             thermo.delete()
-            return Response({'success': True})
+            return Response(self.get_versioned_response(request, {'success': True}))
         except ThermohygrometerModel.DoesNotExist:
             return Response(
-                {'error': 'Thermohygrometer not found'},
+                self.get_versioned_response(
+                    request, {'error': 'Thermohygrometer not found'}),
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -172,6 +185,12 @@ class ThermohygrometerViewSet(viewsets.ViewSet):
 class EnvironmentalAnalysisViewSet(viewsets.ViewSet):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
+    versioning_class = URLPathVersioning
+
+    def get_versioned_response(self, request, data):
+        if request.version == 'v1':
+            return data
+        return data
 
     @swagger_auto_schema(
         operation_description="Gera dados para gráfico de limites",
@@ -217,7 +236,7 @@ class EnvironmentalAnalysisViewSet(viewsets.ViewSet):
             400: 'Dados inválidos'
         }
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], url_path='out-of-limits-chart')
     def out_of_limits_chart(self, request):
         start_date = datetime.strptime(
             request.data['start_date'], '%Y-%m-%d').date()
@@ -310,7 +329,7 @@ class EnvironmentalAnalysisViewSet(viewsets.ViewSet):
             'timestamps': sorted(timestamps),
         }
 
-        return Response(context)
+        return Response(self.get_versioned_response(request, context))
 
     @swagger_auto_schema(
         operation_description="Executa análise com IA",
@@ -345,7 +364,7 @@ class EnvironmentalAnalysisViewSet(viewsets.ViewSet):
             400: 'Erro na análise'
         }
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], url_path='analyze-with-ai')
     def analyze_with_ai(self, request):
         try:
             start_date = request.data['start_date']
@@ -372,15 +391,24 @@ class EnvironmentalAnalysisViewSet(viewsets.ViewSet):
             response = analysis_crew.kickoff()
 
             results = json.loads(response.pydantic.model_dump_json())
-            return Response(results)
+            return Response(self.get_versioned_response(request, results))
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                self.get_versioned_response(request, {'error': str(e)}),
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ExportDataViewSet(viewsets.ViewSet):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
+    versioning_class = URLPathVersioning
+
+    def get_versioned_response(self, request, data):
+        if request.version == 'v1':
+            return data
+        return data
 
     @swagger_auto_schema(
         operation_description="Exporta dados para CSV",
@@ -401,7 +429,7 @@ class ExportDataViewSet(viewsets.ViewSet):
             400: 'Parâmetros inválidos'
         }
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], url_path='export-to-csv')
     def export_to_csv(self, request):
         try:
             instrument_id = request.data.get('instrument_id')
@@ -411,7 +439,11 @@ class ExportDataViewSet(viewsets.ViewSet):
             end_time = request.data.get('end_time')
 
             if not all([instrument_id, start_date, start_time, end_date, end_time]):
-                return Response({'error': 'Missing required parameters'}, status=400)
+                return Response(
+                    self.get_versioned_response(
+                        request, {'error': 'Missing required parameters'}),
+                    status=400
+                )
 
             selected_instrument = ThermohygrometerModel.objects.get(
                 id=instrument_id)
@@ -441,14 +473,27 @@ class ExportDataViewSet(viewsets.ViewSet):
 
             return response
         except ThermohygrometerModel.DoesNotExist:
-            return Response({'error': 'Instrument not found'}, status=404)
+            return Response(
+                self.get_versioned_response(
+                    request, {'error': 'Instrument not found'}),
+                status=404
+            )
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response(
+                self.get_versioned_response(request, {'error': str(e)}),
+                status=400
+            )
 
 
 class CertificateViewSet(viewsets.ViewSet):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
+    versioning_class = URLPathVersioning
+
+    def get_versioned_response(self, request, data):
+        if request.version == 'v1':
+            return data
+        return data
 
     @swagger_auto_schema(
         operation_description="Lista todos os certificados de calibração",
@@ -483,7 +528,7 @@ class CertificateViewSet(viewsets.ViewSet):
             }
             for cert in certificates
         ]
-        return Response(data)
+        return Response(self.get_versioned_response(request, data))
 
     @swagger_auto_schema(
         operation_description="Cria um novo certificado de calibração",
@@ -529,12 +574,13 @@ class CertificateViewSet(viewsets.ViewSet):
             certificate = CalibrationCertificateModel.objects.create(
                 **request.data)
             return Response(
-                {'success': True, 'id': certificate.id},
+                self.get_versioned_response(
+                    request, {'success': True, 'id': certificate.id}),
                 status=status.HTTP_201_CREATED
             )
         except Exception as e:
             return Response(
-                {'error': str(e)},
+                self.get_versioned_response(request, {'error': str(e)}),
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -558,14 +604,15 @@ class CertificateViewSet(viewsets.ViewSet):
                 thermo.save()
 
             certificate.delete()
-            return Response({'success': True})
+            return Response(self.get_versioned_response(request, {'success': True}))
         except CalibrationCertificateModel.DoesNotExist:
             return Response(
-                {'error': 'Certificate not found'},
+                self.get_versioned_response(
+                    request, {'error': 'Certificate not found'}),
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
-                {'error': str(e)},
+                self.get_versioned_response(request, {'error': str(e)}),
                 status=status.HTTP_400_BAD_REQUEST
             )

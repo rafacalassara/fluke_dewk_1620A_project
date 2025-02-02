@@ -53,7 +53,7 @@
         const ip = document.getElementById('new-instrument-ip').value;
 
         try {
-            const response = await fetch('/api/thermohygrometers/', {
+            const response = await fetch('/api/v1/thermohygrometers/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,7 +87,7 @@
                 throw new Error('Invalid thermohygrometer ID');
             }
 
-            const response = await fetch(`/api/thermohygrometers/${thermoId}/`, {
+            const response = await fetch(`/api/v1/thermohygrometers/${thermoId}/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

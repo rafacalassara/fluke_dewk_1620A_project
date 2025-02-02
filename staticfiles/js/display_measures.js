@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Fetch the list of connected thermohygrometers
     try {
-        const response = await fetch('/api/thermohygrometers/connected/');
+        const response = await fetch('/api/v1/thermohygrometers/connected/');
         const thermohygrometers = await response.json();
 
         // Create a box and establish WebSocket connection for each thermohygrometer

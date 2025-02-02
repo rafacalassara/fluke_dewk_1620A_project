@@ -153,7 +153,7 @@
 <script>
   async function exportToCSV() {
     try {
-      const response = await fetch('/api/export/export_to_csv/', {
+      const response = await fetch('/api/v1/export/export-to-csv/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,12 +161,12 @@
         },
         body: JSON.stringify({
           instrument_id: {{ selected_instrument.id }},
-          start_date: '{{ start_date }}',
-          start_time: '{{ start_time }}',
-          end_date: '{{ end_date }}',
-          end_time: '{{ end_time }}'
+        start_date: '{{ start_date }}',
+        start_time: '{{ start_time }}',
+        end_date: '{{ end_date }}',
+        end_time: '{{ end_time }}'
         })
-      });
+  });
 
   if (!response.ok) {
     const errorData = await response.json();

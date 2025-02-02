@@ -8,28 +8,30 @@ from .views import (
     ThermohygrometerViewSet
 )
 
-router = DefaultRouter()
-router.register(
+# Create a router for v1
+router_v1 = DefaultRouter()
+router_v1.register(
     r'thermohygrometers',
     ThermohygrometerViewSet,
     basename='api-thermohygrometer'
 )
-router.register(
+router_v1.register(
     r'environmental-analysis',
     EnvironmentalAnalysisViewSet,
     basename='api-environmental-analysis'
 )
-router.register(
+router_v1.register(
     r'export',
     ExportDataViewSet,
     basename='api-export'
 )
-router.register(
+router_v1.register(
     r'certificates',
     CertificateViewSet,
     basename='api-certificate'
 )
 
+# API URLs with versioning
 urlpatterns = [
-    path('', include(router.urls)),
+    path('v1/', include((router_v1.urls, 'v1'))),
 ]

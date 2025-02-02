@@ -7,7 +7,7 @@ from rest_framework import permissions
 from . import views
 from .api import urls as api_urls
 
-# Adicione esta configuração antes das URL patterns
+# Swagger configuration with versioning support
 schema_view = get_schema_view(
     openapi.Info(
         title="Fluke Data API",
@@ -18,6 +18,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    patterns=[path('api/', include(api_urls))],
 )
 
 urlpatterns = [
@@ -48,7 +49,7 @@ urlpatterns = [
     # Intelligence
     path('intelligence/', views.IntelligenceView.as_view(), name='intelligence'),
 
-    # API endpoints
+    # API endpoints with versioning
     path('api/', include(api_urls)),
 
     # Swagger/OpenAPI URLs

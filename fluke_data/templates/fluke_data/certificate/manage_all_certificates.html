@@ -35,7 +35,7 @@
 <script>
     async function loadCertificates() {
         try {
-            const response = await fetch('/api/certificates/', {
+            const response = await fetch('/api/v1/certificates/', {
                 headers: {
                     'Content-Type': 'application/json',
                 }
@@ -70,7 +70,7 @@
         }
 
         try {
-            const response = await fetch(`/api/certificates/${id}/`, {
+            const response = await fetch(`/api/v1/certificates/${id}/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
