@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from .tools.data_analysis_tools import analyze_environmental_impact
 
-load_dotenv('/home/rafaelcalassara/Programming/LRC/fluke_dewk_1620A_project/.env')
+load_dotenv()
 
 
 class OutputReportFormat(BaseModel):
@@ -28,13 +28,9 @@ class AnalytialCrewState(BaseModel):
 
 
 class AnalyticalCrewFlow(Flow[AnalytialCrewState]):
-    def __init__(self, analysis_report):
-        super().__init__()
-        self.analysis_report = analysis_report
-
     @start()
     def initialize(self):
-        ...
+        print(self.state.environment_report_statistics)
 
     @listen(initialize)
     def analyze_temperature(self):
@@ -149,6 +145,19 @@ class AnalyticalCrewFlow(Flow[AnalytialCrewState]):
             max_rpm=30,
         )
 
+        analyze_productivity_expected_output = dedent(f'''Operational impact report containing:
+            1. Productivity index by thermal range
+            2. Time lost due to critical events
+            3. Humidity vs efficiency correlation
+            4. Optimized schedule recommendations
+            5. Loss/productivity estimates
+
+            temperature_report: {self.state.temperature_report}
+            humidity_report: {self.state.humidity_report}
+            environment_report_statistics: {self.state.environment_report_statistics}
+            '''
+        )
+
         productivity_analysis_task = Task(
             description=dedent("""
                 Analyze the impact of environmental conditions on operations:
@@ -161,17 +170,7 @@ class AnalyticalCrewFlow(Flow[AnalytialCrewState]):
                 the productivity is affected because the technician has to stop working and wait
                 for the air conditioning to return to the ideal range.
             """),
-            expected_output=dedent(f'''Operational impact report containing:
-            1. Productivity index by thermal range
-            2. Time lost due to critical events
-            3. Humidity vs efficiency correlation
-            4. Optimized schedule recommendations
-            5. Loss/productivity estimates
-
-            temperature_report: {self.state.temperature_report}
-            humidity_report: {self.state.humidity_report}
-            environment_report_statistics: {self.state.environment_report_statistics}
-            '''),
+            expected_output=analyze_productivity_expected_output,
             agent=productivity_analyst,
         )
 
@@ -201,7 +200,7 @@ class AnalyticalCrewFlow(Flow[AnalytialCrewState]):
         )
 
         report_generation_task = Task(
-            description=dedent("""
+            description=dedent(f"""
                 Create comprehensive impact report:
                 1. Summarize key findings
                 2. Document critical events

@@ -387,8 +387,8 @@ class EnvironmentalAnalysisViewSet(viewsets.ViewSet):
                 start_time=start_time,
                 end_time=end_time
             )
-            analysis_crew = AnalyticalCrewFlow(analysis_report=analysis_report)
-            response = analysis_crew.kickoff()
+            analysis_crew = AnalyticalCrewFlow()
+            response = analysis_crew.kickoff(inputs={'environment_report_statistics':analysis_report})
 
             results = json.loads(response.pydantic.model_dump_json())
             return Response(self.get_versioned_response(request, results))
