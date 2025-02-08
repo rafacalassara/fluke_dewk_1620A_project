@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -167,3 +168,7 @@ REST_FRAMEWORK = {
     'ALLOWED_VERSIONS': ['v1'],
     'VERSION_PARAM': 'version',
 }
+
+ANALYSIS_API_URL = os.getenv(
+    'ANALYSIS_API_URL', 'http://localhost:8000/api/v1/crew-analysis')
+ANALYSIS_API_KEY = os.getenv('ANALYSIS_API_KEY', 'default_key')

@@ -5,7 +5,8 @@ from .views import (
     CertificateViewSet,
     ExportDataViewSet,
     EnvironmentalAnalysisViewSet,
-    ThermohygrometerViewSet
+    ThermohygrometerViewSet,
+    CrewAnalysisViewSet
 )
 
 # Create a router for v1
@@ -29,6 +30,11 @@ router_v1.register(
     r'certificates',
     CertificateViewSet,
     basename='api-certificate'
+)
+router_v1.register(
+    r'crew-analysis',
+    CrewAnalysisViewSet,
+    basename='api-crew-analysis'
 )
 
 # API URLs with versioning
