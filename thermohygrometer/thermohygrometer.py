@@ -1,8 +1,10 @@
 # fluke_dewk_1620A_project\thermohygrometer\thermohygrometer.py
 
-import pyvisa
 import time
 from datetime import datetime
+
+import pyvisa
+
 
 class Thermohygrometer:
     SN: str

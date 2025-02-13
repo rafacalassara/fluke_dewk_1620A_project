@@ -1,14 +1,15 @@
 # fluke_data/consumers.py
 
-import json
 import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
+import json
 from datetime import datetime, timedelta
-from .visa_communication import Instrument
-from .models import *
 
-from .connection_manager import InstrumentConnectionManager
+from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+from .models import *
+from .visa_communication import Instrument
+
 
 class DataConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -147,6 +148,10 @@ class DataConsumer(AsyncWebsocketConsumer):
             self.last_saved_time = current_time
 
     def save_data_to_db(self, data):
+        if not self.calibration_certificate:
+            data['corrected_temperature'] = None
+            data['corrected_humidity'] = None
+
         MeasuresModel.objects.create(
             instrument=self.thermo,
             temperature=data['temperature'],
@@ -164,7 +169,7 @@ class DataConsumer(AsyncWebsocketConsumer):
             data['corrected_temperature'] = self.instrument.apply_correction(self.calibration_certificate, 'temperature', data['temperature'])
             data['corrected_humidity'] = self.instrument.apply_correction(self.calibration_certificate, 'humidity', data['humidity'])
         else:
-            data['corrected_temperature'] = 'No Calibration Certificate',
+            data['corrected_temperature'] = 'No Calibration Certificate'
             data['corrected_humidity'] = 'No Calibration Certificate'
             
         return data
@@ -180,9 +185,13 @@ class DataConsumer(AsyncWebsocketConsumer):
         if data['humidity'] < self.thermo.min_humidity or data['humidity'] > self.thermo.max_humidity:
             data['humidity_style'] = 'red'
 
-        if data['corrected_temperature'] < self.thermo.min_temperature or data['corrected_temperature'] > self.thermo.max_temperature:
-            data['corrected_temperature_style'] = 'red'
-        if data['corrected_humidity'] < self.thermo.min_humidity or data['corrected_humidity'] > self.thermo.max_humidity:
+        if self.calibration_certificate:
+            if data['corrected_temperature'] < self.thermo.min_temperature or data['corrected_temperature'] > self.thermo.max_temperature:
+                data['corrected_temperature_style'] = 'red'
+            if data['corrected_humidity'] < self.thermo.min_humidity or data['corrected_humidity'] > self.thermo.max_humidity:
+                data['corrected_humidity_style'] = 'red'
+        else:
+            data['corrected_temperature_style'] = 'red',
             data['corrected_humidity_style'] = 'red'
 
         return data

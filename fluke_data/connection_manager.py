@@ -1,10 +1,12 @@
-import asyncio, datetime
-from channels.layers import get_channel_layer
+import asyncio
+
 from asgiref.sync import sync_to_async
+from channels.layers import get_channel_layer
 from django.utils import timezone
-from datetime import timedelta
+
 from .models import ThermohygrometerModel
 from .visa_communication import Instrument
+
 
 class InstrumentConnectionManager:
     @staticmethod

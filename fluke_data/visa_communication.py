@@ -1,8 +1,10 @@
 # fluke_data/visa_communication.py
-import time 
-from thermohygrometer.thermohygrometer import Thermohygrometer
-from .models import ThermohygrometerModel
 from asgiref.sync import sync_to_async
+
+from thermohygrometer.thermohygrometer import Thermohygrometer
+
+from .models import ThermohygrometerModel
+
 
 class Instrument(Thermohygrometer):
     def __init__(self, ip_address):

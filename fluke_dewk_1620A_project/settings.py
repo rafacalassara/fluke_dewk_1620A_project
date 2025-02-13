@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'fluke_data',
+    'fluke_data.apps.FlukeDataConfig',
     'rest_framework',
     'drf_yasg',
 ]
@@ -161,6 +162,13 @@ SWAGGER_SETTINGS = {
     'JSON_EDITOR': True,
 }
 
-REDOC_SETTINGS = {
-    'LAZY_RENDERING': False,
+REST_FRAMEWORK = {
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_VERSION': 'v1',
+    'ALLOWED_VERSIONS': ['v1'],
+    'VERSION_PARAM': 'version',
 }
+
+ANALYSIS_API_URL = os.getenv(
+    'ANALYSIS_API_URL', 'http://localhost:8000/api/v1/crew-analysis')
+ANALYSIS_API_KEY = os.getenv('ANALYSIS_API_KEY', 'default_key')
