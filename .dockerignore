@@ -1,0 +1,9 @@
+# Ignorar diretórios
+node_modules/
+venv/
+__pycache__/
+.git/
+fluke-dewk-env/
+
+# Ignorar arquivos específicos
+*.log

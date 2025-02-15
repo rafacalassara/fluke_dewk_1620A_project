@@ -6,20 +6,15 @@ RUN apt update && apt install -y git bash gcc python3-dev musl-dev build-essenti
 
 WORKDIR /app
 
-RUN git clone https://github.com/rafacalassara/fluke_dewk_1620A_project.git .
+COPY . . 
 
 RUN pip install --upgrade pip && \
     pip install uv && \
     uv venv && \
-    . .venv/bin/activate && \
-    uv sync
+    uv sync 
 
-COPY .env .env
-COPY db.sqlite3 db.sqlite3    
+RUN  . .venv/bin/activate  && python manage.py migrate && python manage.py createsuperuser
 
 EXPOSE 8000
     
 ENTRYPOINT [ "sh", "-c", ". .venv/bin/activate && python manage.py runserver 0.0.0.0:8000" ]
-
-
-
