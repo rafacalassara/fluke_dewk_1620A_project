@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  my_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fluke
+    ports:
+      - "8000:8000"
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
+ 
