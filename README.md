@@ -64,7 +64,7 @@ Before setting up and installing the Fluke DewK 1620A Thermohygrometer Managemen
 
 4. Install the project and its dependencies using UV:
    ```
-   uv pip install -e .
+   uv sync
    ```
 
 ## Configuration
