@@ -1,0 +1,17 @@
+[project]
+name = "fluke-dewk-1620a-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "channels>=4.2.0",
+    "crewai>=0.102.0",
+    "daphne>=4.1.2",
+    "django-rest-framework>=0.1.0",
+    "django>=5.1.6",
+    "drf-yasg>=1.21.8",
+    "load-dotenv>=0.1.0",
+    "pandas>=2.2.3",
+    "pyvisa>=1.14.1",
+]

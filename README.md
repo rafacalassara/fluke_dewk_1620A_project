@@ -34,6 +34,7 @@ Before setting up and installing the Fluke DewK 1620A Thermohygrometer Managemen
 
 - A compatible operating system (Windows, macOS, or Linux)
 - Python 3.7 or later installed on your system
+- UV package manager installed (https://github.com/astral-sh/uv)
 - A code editor or IDE of your choice (e.g., Visual Studio Code, PyCharm)
 - The Fluke DewK 1620A Thermohygrometer device connected to your system
 
@@ -45,25 +46,25 @@ Before setting up and installing the Fluke DewK 1620A Thermohygrometer Managemen
    cd fluke-dewk-1620a-management
    ```
 
-2. Set up a virtual environment:
+2. Create and activate a virtual environment using UV:
    ```
-   python -m venv fluke-dewk-env
+   uv venv
    ```
 
 3. Activate the virtual environment:   
    For Windows, use the following command:
    ```
-   ./fluke-dewk-env/Scripts/activate
+   ./.venv/Scripts/activate
    ```
    
    For Linux, use the following command:
    ```
-   source ./fluke-dewk-env/bin/activate
+   source ./.venv/bin/activate
    ```
 
-4. Install the required dependencies:
+4. Install the project and its dependencies using UV:
    ```
-   pip install -r requirements.txt
+   uv pip install -e .
    ```
 
 ## Configuration
