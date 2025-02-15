@@ -91,6 +91,17 @@ Before setting up and installing the Fluke DewK 1620A Thermohygrometer Managemen
    - For managers: Use manager credentials to add or remove thermohygrometers, manage user accounts, and view real-time data on the dashboard.
    - For regular users: Use provided credentials to view data visualizations by selecting devices and date ranges, and export data to CSV format.
 
+4. API Documentation (Swagger):
+   - Acesse a documentação interativa da API em:
+     - Swagger UI: `http://localhost:8000/swagger/`
+   
+   A documentação inclui:
+   - Fluxo completo de análise ambiental
+   - Detalhes de todos os endpoints
+   - Exemplos de requisições e respostas
+   - Descrição dos parâmetros necessários
+   - Informações sobre autenticação
+
 ## Project Structure
 
 The project is organized as follows:

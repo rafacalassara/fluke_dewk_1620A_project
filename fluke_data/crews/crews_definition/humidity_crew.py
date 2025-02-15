@@ -34,7 +34,7 @@ def perform_humidity_analysis(environment_report_statistics: dict) -> str:
 
             The data is stored in the tags <data> and </data>
             <data>
-            {report}
+            {str(report)}
             </data>
         """),
         expected_output=dedent("""\

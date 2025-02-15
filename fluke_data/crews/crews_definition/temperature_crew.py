@@ -1,3 +1,4 @@
+import json
 import os
 from textwrap import dedent
 from crewai import Agent, Crew, Process, Task
@@ -34,7 +35,7 @@ def perform_temperature_analysis(environment_report_statistics: dict) -> str:
 
             The data is stored in the tags <data> and </data>
             <data>
-            {report}
+            {str(report)}
             </data>
         """),
         expected_output=dedent("""\

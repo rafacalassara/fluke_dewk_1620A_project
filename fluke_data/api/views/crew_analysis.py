@@ -1,3 +1,4 @@
+import json
 import os
 
 from django.conf import settings
@@ -21,27 +22,92 @@ from fluke_data.crews.crews_definition.temperature_crew import \
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CrewAnalysisViewSet(viewsets.ViewSet):
+    """
+    ViewSet para análise de dados ambientais usando crews especializadas.
+
+    IMPORTANTE: Antes de usar estes endpoints, é necessário coletar dados usando a API de análise ambiental
+    (EnvironmentalAnalysisViewSet). O fluxo correto de uso é:
+
+    1. Coletar dados ambientais:
+       POST /environmental-analysis/out-of-limits-chart/
+       {
+           "start_date": "YYYY-MM-DD",
+           "end_date": "YYYY-MM-DD",
+           "start_time": "HH:MM",
+           "end_time": "HH:MM",
+           "instruments": [1, 2, 3]
+       }
+
+    2. Realizar análise com IA:
+       POST /environmental-analysis/analyze-with-ai/
+       {
+           "start_date": "YYYY-MM-DD",
+           "end_date": "YYYY-MM-DD",
+           "start_time": "HH:MM",
+           "end_time": "HH:MM",
+           "instruments": [1, 2, 3]
+       }
+
+    3. Usar os dados obtidos para alimentar os endpoints desta API na seguinte ordem:
+       a. analyze-temperature/
+       b. analyze-humidity/
+       c. analyze-productivity/
+       d. generate-report/
+
+    Observações:
+    - Todos os endpoints requerem uma chave de API (exceto em modo DEBUG)
+    - Os dados devem ser coletados apenas em dias úteis (segunda a sexta)
+    - O sistema considera o impacto na produtividade quando parâmetros estão fora dos limites
+    - Todos os relatórios são gerados em português (BR)
+    """
+
     authentication_classes = []  # Disable built-in authentication
     permission_classes = []      # Disable permission checks
 
     @swagger_auto_schema(
+        operation_description="""
+        Analisa dados de temperatura do ambiente.
+        
+        IMPORTANTE: Antes de usar este endpoint, você deve:
+        1. Coletar dados usando POST /environmental-analysis/out-of-limits-chart/
+        2. Realizar análise com IA usando POST /environmental-analysis/analyze-with-ai/
+        
+        Os dados retornados por esses endpoints devem ser usados para compor o payload desta requisição.
+        """,
         method='post',
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='Data for temperature analysis'),
-                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='API key for authentication')
-            }
+                'data': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    description='Dados para análise de temperatura',
+                    properties={
+                        'temperature_related_key': openapi.Schema(type=openapi.TYPE_NUMBER, description='Dados relacionados à temperatura (chaves contendo "temp")'),
+                        'total_something': openapi.Schema(type=openapi.TYPE_NUMBER, description='Dados totais (chaves contendo "total")')
+                    }
+                ),
+                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='Chave de API para autenticação (não necessária em modo DEBUG)')
+            },
+            required=['data']
         ),
         responses={
             200: openapi.Response('Successful response', openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'analysis_result': openapi.Schema(type=openapi.TYPE_OBJECT, description='Temperature analysis result')
+                    'analysis_result': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        description='Resultado da análise de temperatura',
+                        properties={
+                            'thermal_stability_index': openapi.Schema(type=openapi.TYPE_STRING, description='Índice de estabilidade térmica'),
+                            'time_outside_range': openapi.Schema(type=openapi.TYPE_STRING, description='Tempo total fora do intervalo ideal'),
+                            'temperature_gradients': openapi.Schema(type=openapi.TYPE_STRING, description='Gradientes de temperatura por hora'),
+                            'ac_cycle_correlation': openapi.Schema(type=openapi.TYPE_STRING, description='Correlação com ciclo do ar condicionado')
+                        }
+                    )
                 }
             )),
-            401: 'Invalid API key',
-            500: 'Server error'
+            401: 'Chave de API inválida',
+            500: 'Erro interno do servidor'
         }
     )
     @action(detail=False, methods=['post'], url_path='analyze-temperature')
@@ -56,7 +122,7 @@ class CrewAnalysisViewSet(viewsets.ViewSet):
                     {"error": "Invalid API key"},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
-
+            data = json.loads(data)
             analysis_result = perform_temperature_analysis(data)
             return Response({
                 "analysis_result": analysis_result
@@ -68,23 +134,49 @@ class CrewAnalysisViewSet(viewsets.ViewSet):
             )
 
     @swagger_auto_schema(
+        operation_description="""
+        Analisa dados de umidade do ambiente.
+        
+        IMPORTANTE: Antes de usar este endpoint, você deve:
+        1. Coletar dados usando POST /environmental-analysis/out-of-limits-chart/
+        2. Realizar análise com IA usando POST /environmental-analysis/analyze-with-ai/
+        
+        Os dados retornados por esses endpoints devem ser usados para compor o payload desta requisição.
+        """,
         method='post',
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'data': openapi.Schema(type=openapi.TYPE_OBJECT, description='Data for humidity analysis'),
-                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='API key for authentication')
-            }
+                'data': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    description='Dados para análise de umidade',
+                    properties={
+                        'humidity_related_key': openapi.Schema(type=openapi.TYPE_NUMBER, description='Dados relacionados à umidade (chaves contendo "humid")'),
+                        'total_something': openapi.Schema(type=openapi.TYPE_NUMBER, description='Dados totais (chaves contendo "total")')
+                    }
+                ),
+                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='Chave de API para autenticação (não necessária em modo DEBUG)')
+            },
+            required=['data']
         ),
         responses={
             200: openapi.Response('Successful response', openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'humidity_analysis': openapi.Schema(type=openapi.TYPE_OBJECT, description='Humidity analysis result')
+                    'humidity_analysis': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        description='Resultado da análise de umidade',
+                        properties={
+                            'hygrometric_stability_index': openapi.Schema(type=openapi.TYPE_STRING, description='Índice de estabilidade higrométrica'),
+                            'time_outside_range': openapi.Schema(type=openapi.TYPE_STRING, description='Tempo total fora do intervalo ideal'),
+                            'humidity_gradients': openapi.Schema(type=openapi.TYPE_STRING, description='Gradientes de umidade por hora'),
+                            'ac_cycle_correlation': openapi.Schema(type=openapi.TYPE_STRING, description='Correlação com ciclo do ar condicionado')
+                        }
+                    )
                 }
             )),
-            401: 'Invalid API key',
-            500: 'Server error'
+            401: 'Chave de API inválida',
+            500: 'Erro interno do servidor'
         }
     )
     @action(detail=False, methods=['post'], url_path='analyze-humidity')
@@ -99,7 +191,7 @@ class CrewAnalysisViewSet(viewsets.ViewSet):
                     {"error": "Invalid API key"},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
-
+            data = json.loads(data)
             humidity_analysis = perform_humidity_analysis(data)
             return Response({
                 "humidity_analysis": humidity_analysis
@@ -111,25 +203,62 @@ class CrewAnalysisViewSet(viewsets.ViewSet):
             )
 
     @swagger_auto_schema(
+        operation_description="""
+        Analisa o impacto das condições ambientais na produtividade.
+        
+        IMPORTANTE: Antes de usar este endpoint, você deve:
+        1. Coletar dados usando POST /environmental-analysis/out-of-limits-chart/
+        2. Realizar análise com IA usando POST /environmental-analysis/analyze-with-ai/
+        3. Obter análise de temperatura usando POST /analyze-temperature/
+        4. Obter análise de umidade usando POST /analyze-humidity/
+        
+        Os dados retornados por todos esses endpoints devem ser usados para compor o payload desta requisição.
+        """,
         method='post',
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'temperature_report': openapi.Schema(type=openapi.TYPE_OBJECT, description='Temperature report data'),
-                'humidity_report': openapi.Schema(type=openapi.TYPE_OBJECT, description='Humidity report data'),
-                'environment_stats': openapi.Schema(type=openapi.TYPE_OBJECT, description='Environmental statistics'),
-                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='API key for authentication')
-            }
+                'temperature_report': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Resultado da análise de temperatura (string com o relatório completo)'
+                ),
+                'humidity_report': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Resultado da análise de umidade (string com o relatório completo)'
+                ),
+                'environment_stats': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    description='Estatísticas ambientais gerais',
+                    properties={
+                        'temperature_data': openapi.Schema(type=openapi.TYPE_OBJECT, description='Dados de temperatura'),
+                        'humidity_data': openapi.Schema(type=openapi.TYPE_OBJECT, description='Dados de umidade'),
+                        'time_series': openapi.Schema(type=openapi.TYPE_OBJECT, description='Séries temporais')
+                    }
+                ),
+                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='Chave de API para autenticação (não necessária em modo DEBUG)')
+            },
+            required=['temperature_report',
+                      'humidity_report', 'environment_stats']
         ),
         responses={
             200: openapi.Response('Successful response', openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'productivity_analysis': openapi.Schema(type=openapi.TYPE_OBJECT, description='Productivity analysis result')
+                    'productivity_analysis': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        description='Resultado da análise de produtividade',
+                        properties={
+                            'productivity_index': openapi.Schema(type=openapi.TYPE_OBJECT, description='Índice de produtividade por faixa térmica'),
+                            'time_lost': openapi.Schema(type=openapi.TYPE_STRING, description='Tempo perdido devido a eventos críticos'),
+                            'humidity_efficiency': openapi.Schema(type=openapi.TYPE_STRING, description='Correlação umidade vs eficiência'),
+                            'schedule_recommendations': openapi.Schema(type=openapi.TYPE_STRING, description='Recomendações de horários otimizados'),
+                            'productivity_estimates': openapi.Schema(type=openapi.TYPE_STRING, description='Estimativas de perda/produtividade')
+                        }
+                    )
                 }
             )),
-            401: 'Invalid API key',
-            500: 'Server error'
+            401: 'Chave de API inválida',
+            500: 'Erro interno do servidor'
         }
     )
     @action(detail=False, methods=['post'], url_path='analyze-productivity')
@@ -163,31 +292,58 @@ class CrewAnalysisViewSet(viewsets.ViewSet):
             )
 
     @swagger_auto_schema(
+        operation_description="""
+        Gera um relatório completo de impacto ambiental.
+        
+        IMPORTANTE: Este é o último endpoint do fluxo e deve ser chamado após:
+        1. Coletar dados usando POST /environmental-analysis/out-of-limits-chart/
+        2. Realizar análise com IA usando POST /environmental-analysis/analyze-with-ai/
+        3. Obter análise de temperatura usando POST /analyze-temperature/
+        4. Obter análise de umidade usando POST /analyze-humidity/
+        5. Obter análise de produtividade usando POST /analyze-productivity/
+        
+        O relatório final será gerado em português (BR) e incluirá todas as análises anteriores.
+        """,
         method='post',
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'temperature_report': openapi.Schema(type=openapi.TYPE_OBJECT, description='Temperature report data'),
-                'humidity_report': openapi.Schema(type=openapi.TYPE_OBJECT, description='Humidity report data'),
-                'productivity_report': openapi.Schema(type=openapi.TYPE_OBJECT, description='Productivity report data'),
-                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='API key for authentication')
-            }
+                'temperature_report': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Relatório de temperatura (string com o relatório completo)'
+                ),
+                'humidity_report': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Relatório de umidade (string com o relatório completo)'
+                ),
+                'productivity_report': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Relatório de produtividade (string com o relatório completo)'
+                ),
+                'api_key': openapi.Schema(type=openapi.TYPE_STRING, description='Chave de API para autenticação (não necessária em modo DEBUG)')
+            },
+            required=['temperature_report',
+                      'humidity_report', 'productivity_report']
         ),
         responses={
             200: openapi.Response('Successful response', openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'impact_report': openapi.Schema(type=openapi.TYPE_OBJECT, description='Impact report', properties={
-                        'title': openapi.Schema(type=openapi.TYPE_STRING, description='Report title'),
-                        'summary': openapi.Schema(type=openapi.TYPE_STRING, description='Report summary'),
-                        'analytics': openapi.Schema(type=openapi.TYPE_OBJECT, description='Analytics details'),
-                        'suggestion': openapi.Schema(type=openapi.TYPE_STRING, description='Suggestions'),
-                        'conclusion': openapi.Schema(type=openapi.TYPE_STRING, description='Conclusion'),
-                    })
+                    'impact_report': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        description='Relatório de impacto em português (BR)',
+                        properties={
+                            'title': openapi.Schema(type=openapi.TYPE_STRING, description='Título descritivo do relatório'),
+                            'summary': openapi.Schema(type=openapi.TYPE_STRING, description='Resumo executivo com principais descobertas'),
+                            'analytics': openapi.Schema(type=openapi.TYPE_OBJECT, description='Análise detalhada de desempenho'),
+                            'suggestion': openapi.Schema(type=openapi.TYPE_STRING, description='Sugestões de otimização operacional'),
+                            'conclusion': openapi.Schema(type=openapi.TYPE_STRING, description='Conclusões sobre impacto no laboratório')
+                        }
+                    )
                 }
             )),
-            401: 'Invalid API key',
-            500: 'Server error'
+            401: 'Chave de API inválida',
+            500: 'Erro interno do servidor'
         }
     )
     @action(detail=False, methods=['post'], url_path='generate-report')
