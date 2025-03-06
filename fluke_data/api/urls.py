@@ -8,6 +8,7 @@ from .views import (
     ThermohygrometerViewSet,
     CrewAnalysisViewSet
 )
+from fluke_data.api.views.sensor import SensorViewSet
 
 # Create a router for v1
 router_v1 = DefaultRouter()
@@ -35,6 +36,11 @@ router_v1.register(
     r'crew-analysis',
     CrewAnalysisViewSet,
     basename='api-crew-analysis'
+)
+router_v1.register(
+    r'sensors',
+    SensorViewSet,
+    basename='sensors'
 )
 
 # API URLs with versioning

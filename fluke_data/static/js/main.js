@@ -50,6 +50,12 @@ async function addThermohygrometer() {
 
     resultContainer.appendChild(resultDiv);
 
+    // Create a container for sensors
+    const sensorsContainer = document.createElement('div');
+    sensorsContainer.className = 'sensors-container';
+    sensorsContainer.id = `sensors-${selectedThermohygrometer}`;
+    resultDiv.appendChild(sensorsContainer);
+
     let reconnectAttempts = 0;
 
     function createWebSocket() {
@@ -59,7 +65,9 @@ async function addThermohygrometer() {
 
         ws.onopen = function () {
             console.log(`WebSocket connection opened for ${selectedInstrumentName}`);
-            resultDiv.removeChild(connectingMessage);
+            if (resultDiv.contains(connectingMessage)) {
+                resultDiv.removeChild(connectingMessage);
+            }
         };
 
         ws.onmessage = function (event) {
@@ -69,25 +77,52 @@ async function addThermohygrometer() {
                 return;
             }
 
-            if (!data.data?.temperature || !data.data?.humidity) {
-                console.log(`Data missing for ${selectedInstrumentName}.`);
+            if (!data.data) {
+                console.log(`No data received for ${selectedInstrumentName}`);
                 return;
             }
+            
+            // Get sensor data
+            const sensorData = data.data;
+            const sensorId = sensorData.sensor_id;
+            const sensorName = sensorData.sensor_name;
+            const location = sensorData.location;
+            const channel = sensorData.channel;
+            
+            // Get measurement data
+            const temperature = sensorData.temperature;
+            const correctedTemperature = sensorData.corrected_temperature;
+            const humidity = sensorData.humidity;
+            const correctedHumidity = sensorData.corrected_humidity;
+            const date = sensorData.date;
 
-            const { temperature, corrected_temperature, humidity, corrected_humidity, date, thermo_info } = data.data;
+            // Retrieve limits
+            const thermoInfo = sensorData.thermo_info;
+            const minTemperature = thermoInfo.min_temperature ?? -Infinity;
+            const maxTemperature = thermoInfo.max_temperature ?? Infinity;
+            const minHumidity = thermoInfo.min_humidity ?? -Infinity;
+            const maxHumidity = thermoInfo.max_humidity ?? Infinity;
 
-            // Retrieve limits, using a fallback value if they are not defined in the database
-            const minTemperature = thermo_info.min_temperature ?? -Infinity;
-            const maxTemperature = thermo_info.max_temperature ?? Infinity;
-            const minHumidity = thermo_info.min_humidity ?? -Infinity;
-            const maxHumidity = thermo_info.max_humidity ?? Infinity;
-
-            // Check if values are outside of the acceptable range
+            // Get styles based on limits
             const getStyle = (value, min, max) => (value < min || value > max) ? 'color: red;' : 'color: black;';
             const temperatureStyle = getStyle(temperature, minTemperature, maxTemperature);
-            const correctedTemperatureStyle = getStyle(corrected_temperature, minTemperature, maxTemperature);
+            const correctedTemperatureStyle = getStyle(correctedTemperature, minTemperature, maxTemperature);
             const humidityStyle = getStyle(humidity, minHumidity, maxHumidity);
-            const correctedHumidityStyle = getStyle(corrected_humidity, minHumidity, maxHumidity);
+            const correctedHumidityStyle = getStyle(correctedHumidity, minHumidity, maxHumidity);
+
+            // Check if we already have a container for this sensor
+            let sensorDiv = document.getElementById(`sensor-${sensorId}`);
+            if (!sensorDiv) {
+                sensorDiv = document.createElement('div');
+                sensorDiv.id = `sensor-${sensorId}`;
+                sensorDiv.className = 'sensor-data';
+                
+                const sensorHeader = document.createElement('h4');
+                sensorHeader.textContent = `${sensorName} - ${location} (Channel ${channel})`;
+                sensorDiv.appendChild(sensorHeader);
+                
+                sensorsContainer.appendChild(sensorDiv);
+            }
 
             let formattedData = `
                 <table>
@@ -99,20 +134,30 @@ async function addThermohygrometer() {
                     <tr>
                         <td><strong>Temperature</strong></td>
                         <td style="${temperatureStyle}">${temperature} °C</td>
-                        <td style="${correctedTemperatureStyle}">${corrected_temperature} °C</td>
+                        <td style="${correctedTemperatureStyle}">${correctedTemperature} °C</td>
                     </tr>
                     <tr>
                         <td><strong>Humidity</strong></td>
                         <td style="${humidityStyle}">${humidity} %</td>
-                        <td style="${correctedHumidityStyle}">${corrected_humidity} %</td>
+                        <td style="${correctedHumidityStyle}">${correctedHumidity} %</td>
                     </tr>
                 </table>
-                ${date ? `<p><strong>Instrument Date:</strong> ${date}</p>` : ''}
-                <button onclick="closeConnection('${selectedThermohygrometer}')">Close Connection</button>
             `;
 
-            // Update the resultDiv with new data and styles
-            resultDiv.innerHTML = resultHeader.outerHTML + resultSubHeader.outerHTML + formattedData;
+            if (date) {
+                formattedData += `<p><strong>Instrument Date:</strong> ${date}</p>`;
+            }
+
+            // Update the sensor content (keeping its header)
+            const sensorContent = sensorDiv.querySelector('.sensor-content');
+            if (sensorContent) {
+                sensorContent.innerHTML = formattedData;
+            } else {
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'sensor-content';
+                contentDiv.innerHTML = formattedData;
+                sensorDiv.appendChild(contentDiv);
+            }
         };
 
         ws.onerror = function (error) {

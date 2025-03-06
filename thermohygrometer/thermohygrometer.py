@@ -63,50 +63,69 @@ class Thermohygrometer:
         status = '1' if status else '0'
         self.send_command(f'FORM:TDST:STAT {status}', response_needed=False)
 
-    def _parse_live_data_one_channel(self, data: str):
+    def get_live_data(self, channel=1):
+        """Get live data from a specified channel (1 or 2)"""
+        if not self.instrument:
+            return None
+        
+        if channel not in [1, 2]:
+            raise ValueError("Channel must be 1 or 2")
+        
+        try:
+            data = self.send_command(f'READ? {channel}')
+            if not data:
+                return None
+                
+            return self._parse_live_data_one_channel(data, channel)
+        except Exception as e:
+            print(f"Error getting live data for channel {channel}: {e}")
+            return None
+    
+    def get_live_data_all_channels(self):
+        """Get live data from all available channels"""
+        results = {}
+        
+        # First channel data
+        ch1_data = self.get_live_data(channel=1)
+        if ch1_data:
+            results[1] = ch1_data
+            
+        # Second channel data
+        ch2_data = self.get_live_data(channel=2)
+        if ch2_data:
+            results[2] = ch2_data
+            
+        return results
+
+    def _parse_live_data_one_channel(self, data, channel=1):
         """
         Parses live data received from one channel of the thermohygrometer.
-
-        The function processes the incoming raw data string and extracts temperature, humidity, and timestamp information.
-        The format of the incoming data depends on the `_format_data` flag.
-
+        
         Args:
             data (str): The raw data string received from the thermohygrometer.
-
+            channel (int): The channel number (1 or 2)
+            
         Returns:
             dict: A dictionary containing the parsed temperature, humidity, and (if applicable) date.
-
-            - If `_format_data` is `True`, the expected input format is:
-            "1,1,22.86,C,47.4,%,2024,7,17,14,5,15"
-            The result will be:
-            {
-                'temperature': <float>,
-                'humidity': <float>,
-                'date': <str>  # In "YYYY/MM/DD HH:MM:SS" format
-            }
-
-            - If `_format_data` is `False`, the expected input format is:
-            "22.80,47.3"
-            The result will be:
-            {
-                'temperature': <float>,
-                'humidity': <float>
-            }
+                  Now includes the channel number.
         """
         parsed_data = data.split(',')
-        result = {}
+        result = {'channel': channel}
+        
         if self._format_data is True:
-            # response format: 1,1,22.86,C,47.4,%,2024,7,17,14,5,15
-            parsed_data = parsed_data[2:]  # Skip the first two elements
+            # Skip the first two elements
+            parsed_data = parsed_data[2:]
             result['temperature'] = float(parsed_data.pop(0))
             result['humidity'] = float(parsed_data.pop(1))
-            year, month, day, hour, minute, second = map(int, parsed_data[2:])
-            date = datetime(year, month, day, hour, minute, second)
-            date = date.isoformat().replace('T',' ').replace('-','/')
-            result['date'] = date
-            # returns : 
+            
+            # If date information is available
+            if len(parsed_data) >= 6:
+                year, month, day, hour, minute, second = map(int, parsed_data[2:])
+                date = datetime(year, month, day, hour, minute, second)
+                date = date.isoformat().replace('T',' ').replace('-','/')
+                result['date'] = date
         else:
-            # response format: 22.80,47.3
+            # Basic format: "22.80,47.3"
             result['temperature'] = float(parsed_data[0])
             result['humidity'] = float(parsed_data[1])
 
@@ -185,4 +204,3 @@ class Thermohygrometer:
                 return float(value.replace(',','.'))
         else:
             return value
-            
