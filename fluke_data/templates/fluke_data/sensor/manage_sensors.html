@@ -1,0 +1,118 @@
+{% extends "fluke_data/base.html" %}
+
+{% block title %}Manage Sensors - {{ thermohygrometer.instrument_name }}{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <h2>Manage Sensors for {{ thermohygrometer.instrument_name }}</h2>
+    <p>Instrument: {{ thermohygrometer.instrument_name }} (PN: {{ thermohygrometer.pn }}, SN: {{ thermohygrometer.sn }})</p>
+    
+    <h3>Sensors</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Sensor Name</th>
+                <th>Channel</th>
+                <th>Location</th>
+                <th>Sensor PN</th>
+                <th>Sensor SN</th>
+                <th>Calibration Certificate</th>
+                <th>Temperature Limits</th>
+                <th>Humidity Limits</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sensor in sensors %}
+            <tr id="sensor-{{ sensor.id }}">
+                <td>{{ sensor.sensor_name }}</td>
+                <td>{{ sensor.get_channel_display }}</td>
+                <td>{{ sensor.location|default:"-" }}</td>
+                <td>{{ sensor.sensor_pn|default:"-" }}</td>
+                <td>{{ sensor.sensor_sn|default:"-" }}</td>
+                <td>
+                    {% if sensor.calibration_certificate %}
+                    {{ sensor.calibration_certificate.certificate_number }}
+                    (Valid until: {{ sensor.calibration_certificate.next_calibration_date }})
+                    {% else %}
+                    No certificate
+                    {% endif %}
+                </td>
+                <td>
+                    {% if sensor.min_temperature is not None and sensor.max_temperature is not None %}
+                    {{ sensor.min_temperature }} °C to {{ sensor.max_temperature }} °C
+                    {% else %}
+                    Using instrument defaults
+                    {% endif %}
+                </td>
+                <td>
+                    {% if sensor.min_humidity is not None and sensor.max_humidity is not None %}
+                    {{ sensor.min_humidity }}% to {{ sensor.max_humidity }}%
+                    {% else %}
+                    Using instrument defaults
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'update_sensor' sensor.pk %}" class="btn btn-primary btn-sm">Edit</a>
+                    <button onclick="deleteSensor({{ sensor.id }})" class="btn btn-danger btn-sm">Delete</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9">No sensors configured for this thermohygrometer.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="action-buttons" style="padding-top: 10px;">
+        <a href="{% url 'create_sensor' thermohygrometer.id %}" class="btn btn-primary">Add New Sensor</a>
+        <a href="{% url 'manage_thermohygrometers' %}" class="btn btn-primary">Back to Thermohygrometers</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function deleteSensor(id) {
+        if (!confirm('Are you sure you want to delete this sensor?')) {
+            return;
+        }
+
+        try {
+            const sensorId = parseInt(id);
+            if (isNaN(sensorId)) {
+                throw new Error('Invalid sensor ID');
+            }
+
+            const response = await fetch(`/api/v1/sensors/${sensorId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                const element = document.getElementById(`sensor-${sensorId}`);
+                if (element) {
+                    element.remove();
+                } else {
+                    console.warn('Element not found in DOM');
+                    location.reload();
+                }
+            } else {
+                alert('Error deleting sensor: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error deleting sensor: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

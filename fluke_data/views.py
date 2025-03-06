@@ -7,10 +7,10 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Avg, Max, Min
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     CreateView, DeleteView,
-    ListView, TemplateView,
+    DetailView, ListView, TemplateView,
     UpdateView
 )
 
@@ -199,3 +199,43 @@ class CreateCertificateView(LoginRequiredMixin, ManagerRequiredMixin, CreateView
         response = super().form_valid(form)
         messages.success(self.request, 'Certificate created successfully.')
         return response
+
+
+class ManageSensorsView(LoginRequiredMixin, ManagerRequiredMixin, DetailView):
+    model = ThermohygrometerModel
+    template_name = 'fluke_data/sensor/manage_sensors.html'
+    pk_url_kwarg = 'thermohygrometer_id'
+    context_object_name = 'thermohygrometer'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sensors'] = SensorModel.objects.filter(instrument=self.object).order_by('channel')
+        return context
+
+class UpdateSensorView(LoginRequiredMixin, ManagerRequiredMixin, UpdateView):
+    model = SensorModel
+    template_name = 'fluke_data/sensor/update_sensor.html'
+    form_class = SensorForm
+    
+    def get_success_url(self):
+        return reverse('manage_sensors', kwargs={'thermohygrometer_id': self.object.instrument.id})
+
+class CreateSensorView(LoginRequiredMixin, ManagerRequiredMixin, CreateView):
+    model = SensorModel
+    form_class = SensorForm
+    template_name = 'fluke_data/sensor/create_sensor.html'
+    
+    def get_success_url(self):
+        return reverse('manage_sensors', kwargs={'thermohygrometer_id': self.kwargs['thermohygrometer_id']})
+    
+    def form_valid(self, form):
+        thermohygrometer = ThermohygrometerModel.objects.get(id=self.kwargs['thermohygrometer_id'])
+        form.instance.instrument = thermohygrometer
+        messages.success(self.request, 'Sensor created successfully.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        thermohygrometer = ThermohygrometerModel.objects.get(id=self.kwargs['thermohygrometer_id'])
+        context['thermohygrometer'] = thermohygrometer
+        return context

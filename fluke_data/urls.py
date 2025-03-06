@@ -57,4 +57,11 @@ urlpatterns = [
          name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger',
          cache_timeout=0), name='schema-swagger-ui'),
+
+    # New route
+    path('manage-sensors/<int:thermohygrometer_id>/', views.ManageSensorsView.as_view(), name='manage_sensors'),
+    path('update-sensor/<int:pk>/', views.UpdateSensorView.as_view(), name='update_sensor'),
+
+    # New route for creating sensor
+    path('thermohygrometers/<int:thermohygrometer_id>/sensors/create/', views.CreateSensorView.as_view(), name='create_sensor'),
 ]

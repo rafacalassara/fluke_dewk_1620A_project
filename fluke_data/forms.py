@@ -7,7 +7,7 @@ from django.contrib.auth.forms import (
     UserCreationForm
 )
 
-from .models import CalibrationCertificateModel, ThermohygrometerModel
+from .models import CalibrationCertificateModel, SensorModel, ThermohygrometerModel
 
 User = get_user_model()
 
@@ -217,3 +217,26 @@ class EnvironmentalAnalysisForm(forms.Form):
     class Meta:
         field_order = ['start_date', 'end_date',
                        'start_time', 'end_time', 'instruments']
+
+
+class SensorForm(forms.ModelForm):
+    class Meta:
+        model = SensorModel
+        fields = [
+            'sensor_name', 'location', 'channel',
+            'sensor_pn', 'sensor_sn', 'calibration_certificate',
+            'min_temperature', 'max_temperature',
+            'min_humidity', 'max_humidity',
+        ]
+        widgets = {
+            'sensor_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'channel': forms.Select(attrs={'class': 'form-control'}),
+            'sensor_pn': forms.TextInput(attrs={'class': 'form-control'}),
+            'sensor_sn': forms.TextInput(attrs={'class': 'form-control'}),
+            'calibration_certificate': forms.Select(attrs={'class': 'form-control'}),
+            'min_temperature': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'max_temperature': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'min_humidity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'max_humidity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+        }
