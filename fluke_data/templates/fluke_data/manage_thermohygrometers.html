@@ -13,7 +13,7 @@
                 <th>Instrument Name</th>
                 <th>PN</th>
                 <th>SN</th>
-                <th>Current Certificate</th>
+                <th>Sensors</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -24,16 +24,20 @@
                 <td>{{ thermo.pn }}</td>
                 <td>{{ thermo.sn }}</td>
                 <td>
-                    {% if thermo.calibration_certificate %}
-                    {{ thermo.calibration_certificate.certificate_number }}
-                    (Valid until: {{ thermo.calibration_certificate.next_calibration_date }})
+                    {% if thermo.sensors.all|length > 0 %}
+                        {% for sensor in thermo.sensors.all %}
+                            {{ sensor }}
+                        {% endfor %}
                     {% else %}
-                    No certificate
+                        No sensors
                     {% endif %}
                 </td>
-                <td>
-                    <a href="{% url 'update_thermohygrometer' thermo.pk %}" class="btn btn-primary btn-sm">Edit</a>
-                    <button onclick="deleteThermohygrometer({{ thermo.id }})" class="btn btn-danger">Delete</button>
+                <td style="text-align: center;">
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+                        <a href="{% url 'update_thermohygrometer' thermo.pk %}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{% url 'manage_sensors' thermo.pk %}" class="btn btn-primary btn-sm">Manage Sensors</a>
+                        <button onclick="deleteThermohygrometer({{ thermo.id }})" class="btn btn-danger btn-sm">Delete</button>
+                    </div>
                 </td>
             </tr>
             {% endfor %}

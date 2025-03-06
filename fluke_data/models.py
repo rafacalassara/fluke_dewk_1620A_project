@@ -82,7 +82,7 @@ class SensorModel(models.Model):
         unique_together = [['instrument', 'channel']]
     
     def __str__(self):
-        return f"{self.sensor_name} - {self.get_channel_display()} - {self.location}"
+        return f"Channel: {self.channel} - {self.location}"
 
 
 class MeasuresModel(models.Model):
