@@ -8,7 +8,7 @@ class SensorInline(admin.TabularInline):
     extra = 0
 
 class ThermohygrometerAdmin(admin.ModelAdmin):
-    list_display = ['instrument_name', 'ip_address', 'pn', 'sn', 'is_connected', 'calibration_certificate']
+    list_display = ['instrument_name', 'ip_address', 'pn', 'sn', 'is_connected']
     search_fields = ['instrument_name', 'ip_address', 'pn', 'sn']
     inlines = [SensorInline]
 

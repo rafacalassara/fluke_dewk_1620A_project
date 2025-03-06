@@ -17,7 +17,6 @@ class DataConsumer(AsyncWebsocketConsumer):
         if self.instrument and self.instrument.instrument:
             await self.add_to_group()
             await self.accept()
-            await sync_to_async(self.set_calibration_info)()
             await self.send_connecting_message()
             await sync_to_async(self.update_connection_status)(True)
             asyncio.create_task(self.send_data_loop())
@@ -89,12 +88,6 @@ class DataConsumer(AsyncWebsocketConsumer):
         self.group_name = f"thermohygrometer_{self.instrument.GROUP_NAME}" if hasattr(self, 'instrument') else f"thermohygrometer_error"
         self.listener_group_name = f'thermo_{self.thermohygrometer_id}'
         self.running = True
-
-    def set_calibration_info(self):
-        try:
-            self.calibration_certificate = CalibrationCertificateModel.objects.get(id=self.thermo.calibration_certificate.id)
-        except AttributeError:
-            self.calibration_certificate = None
 
     async def add_to_group(self):
         await self.channel_layer.group_add(
@@ -178,10 +171,6 @@ class DataConsumer(AsyncWebsocketConsumer):
             self.last_saved_time[sensor.id] = current_time
 
     def save_data_to_db(self, data, sensor):
-        if not self.calibration_certificate:
-            data['corrected_temperature'] = None
-            data['corrected_humidity'] = None
-
         MeasuresModel.objects.create(
             instrument=self.thermo,
             sensor=sensor,
@@ -196,9 +185,14 @@ class DataConsumer(AsyncWebsocketConsumer):
         ThermohygrometerModel.objects.filter(id=self.thermohygrometer_id).update(is_connected=status)
 
     def correct_measures(self, data, sensor):
-        if self.calibration_certificate:    
-            data['corrected_temperature'] = self.instrument.apply_correction(self.calibration_certificate, 'temperature', data['temperature'])
-            data['corrected_humidity'] = self.instrument.apply_correction(self.calibration_certificate, 'humidity', data['humidity'])
+        # Check if the sensor has a calibration certificate
+        if hasattr(sensor, 'calibration_certificate') and sensor.calibration_certificate:
+            data['corrected_temperature'] = self.instrument.apply_correction(
+                sensor.calibration_certificate, 'temperature', data['temperature']
+            )
+            data['corrected_humidity'] = self.instrument.apply_correction(
+                sensor.calibration_certificate, 'humidity', data['humidity']
+            )
         else:
             data['corrected_temperature'] = 'No Calibration Certificate'
             data['corrected_humidity'] = 'No Calibration Certificate'
@@ -221,7 +215,8 @@ class DataConsumer(AsyncWebsocketConsumer):
         if data['humidity'] < min_humidity or data['humidity'] > max_humidity:
             data['humidity_style'] = 'red'
 
-        if self.calibration_certificate:
+        has_calibration = hasattr(sensor, 'calibration_certificate') and sensor.calibration_certificate
+        if has_calibration:
             if data['corrected_temperature'] < min_temp or data['corrected_temperature'] > max_temp:
                 data['corrected_temperature_style'] = 'red'
             if data['corrected_humidity'] < min_humidity or data['corrected_humidity'] > max_humidity:
@@ -310,13 +305,17 @@ class ThermohygrometerConsumer(AsyncWebsocketConsumer):
                 corrected_temperature = temperature
                 corrected_humidity = humidity
                 
-                if self.thermo.calibration_certificate:
+                # Use sensor-specific calibration certificate
+                if hasattr(sensor, 'calibration_certificate') and sensor.calibration_certificate:
                     corrected_temperature = await sync_to_async(instrument.apply_correction)(
-                        self.thermo.calibration_certificate, 'temperature', temperature
+                        sensor.calibration_certificate, 'temperature', temperature
                     )
                     corrected_humidity = await sync_to_async(instrument.apply_correction)(
-                        self.thermo.calibration_certificate, 'humidity', humidity
+                        sensor.calibration_certificate, 'humidity', humidity
                     )
+                else:
+                    corrected_temperature = 'No Calibration Certificate'
+                    corrected_humidity = 'No Calibration Certificate'
                 
                 min_temp = sensor.min_temperature
                 max_temp = sensor.max_temperature
@@ -342,7 +341,7 @@ class ThermohygrometerConsumer(AsyncWebsocketConsumer):
                 if humidity < min_humidity or humidity > max_humidity:
                     humidity_style = 'red'
 
-                if self.thermo.calibration_certificate:
+                if hasattr(sensor, 'calibration_certificate') and sensor.calibration_certificate:
                     if corrected_temperature < min_temp or corrected_temperature > max_temp:
                         corrected_temperature_style = 'red'
                     if corrected_humidity < min_humidity or corrected_humidity > max_humidity:

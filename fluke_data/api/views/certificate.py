@@ -15,7 +15,8 @@ from rest_framework.response import Response
 from rest_framework.versioning import URLPathVersioning
 
 from fluke_data.models import (CalibrationCertificateModel,
-                               ThermohygrometerModel)
+                              SensorModel,
+                              ThermohygrometerModel)
 
 
 class CertificateViewSet(viewsets.ViewSet):
@@ -42,7 +43,8 @@ class CertificateViewSet(viewsets.ViewSet):
                             'certificate_number': openapi.Schema(type=openapi.TYPE_STRING),
                             'calibration_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
                             'next_calibration_date': openapi.Schema(type=openapi.TYPE_STRING, format='date'),
-                            'associated_instrument': openapi.Schema(type=openapi.TYPE_STRING)
+                            'associated_instrument': openapi.Schema(type=openapi.TYPE_STRING),
+                            'associated_sensor': openapi.Schema(type=openapi.TYPE_STRING)
                         }
                     )
                 )
@@ -51,16 +53,21 @@ class CertificateViewSet(viewsets.ViewSet):
     )
     def list(self, request):
         certificates = CalibrationCertificateModel.objects.all().order_by('-calibration_date')
-        data = [
-            {
+        data = []
+        
+        for cert in certificates:
+            sensor = cert.sensormodel_set.first() if hasattr(cert, 'sensormodel_set') else None
+            
+            cert_data = {
                 'id': cert.id,
                 'certificate_number': cert.certificate_number,
                 'calibration_date': cert.calibration_date,
                 'next_calibration_date': cert.next_calibration_date,
-                'associated_instrument': cert.thermohygrometermodel_set.first().instrument_name if cert.thermohygrometermodel_set.exists() else None
+                'associated_sensor': sensor.sensor_name if sensor else None,
+                'associated_instrument': sensor.instrument.instrument_name if sensor else None
             }
-            for cert in certificates
-        ]
+            data.append(cert_data)
+            
         return Response(self.get_versioned_response(request, data))
 
     @swagger_auto_schema(
@@ -128,13 +135,11 @@ class CertificateViewSet(viewsets.ViewSet):
         try:
             certificate = CalibrationCertificateModel.objects.get(id=pk)
 
-            # Remover referência do certificado dos termohigrômetros
-            thermohygrometers = ThermohygrometerModel.objects.filter(
-                calibration_certificate=certificate
-            )
-            for thermo in thermohygrometers:
-                thermo.calibration_certificate = None
-                thermo.save()
+            # Remove reference of the certificate from sensors
+            sensors = SensorModel.objects.filter(calibration_certificate=certificate)
+            for sensor in sensors:
+                sensor.calibration_certificate = None
+                sensor.save()
 
             certificate.delete()
             return Response(self.get_versioned_response(request, {'success': True}))

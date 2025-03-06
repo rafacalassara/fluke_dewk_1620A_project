@@ -1,6 +1,7 @@
 # fluke_data/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 
 class CalibrationCertificateModel(models.Model):
@@ -38,13 +39,12 @@ class CalibrationCertificateModel(models.Model):
 class ThermohygrometerModel(models.Model):
     ip_address = models.CharField(max_length=100)
     is_connected = models.BooleanField(default=False)
-    time_interval_to_save_measures = models.IntegerField(default=5)
+    time_interval_to_save_measures = models.IntegerField(default=60)
     pn = models.CharField(max_length=100)
     sn = models.CharField(max_length=100)
     instrument_name = models.CharField(max_length=100)
     group_name = models.CharField(max_length=100, null=True, blank=True)
     last_connection_attempt = models.DateTimeField(null=True, blank=True)
-    calibration_certificate = models.ForeignKey(CalibrationCertificateModel, on_delete=models.SET_NULL, null=True)
 
     # For backward compatibility
     min_temperature = models.FloatField(null=True, blank=True, help_text="Minimum acceptable temperature value - moved to sensor level")
@@ -64,7 +64,7 @@ class ThermohygrometerModel(models.Model):
 class SensorModel(models.Model):
     instrument = models.ForeignKey(ThermohygrometerModel, on_delete=models.CASCADE, related_name='sensors')
     sensor_name = models.CharField(max_length=100)
-    location = models.CharField(max_length=100, help_text="Room or location where the sensor is placed")
+    location = models.CharField(max_length=100, help_text="Room or location where the sensor is placed", null=True, blank=True)
     sensor_sn = models.CharField(max_length=100, null=True, blank=True)
     sensor_pn = models.CharField(max_length=100, null=True, blank=True)
     channel = models.IntegerField(choices=((1, 'Channel 1'), (2, 'Channel 2')), default=1)
@@ -75,6 +75,9 @@ class SensorModel(models.Model):
     min_humidity = models.FloatField(null=True, blank=True, help_text="Minimum acceptable humidity value")
     max_humidity = models.FloatField(null=True, blank=True, help_text="Maximum acceptable humidity value")
     
+    # Add calibration certificate field to sensor
+    calibration_certificate = models.ForeignKey(CalibrationCertificateModel, on_delete=models.SET_NULL, null=True, blank=True)
+
     class Meta:
         unique_together = [['instrument', 'channel']]
     
@@ -83,15 +86,15 @@ class SensorModel(models.Model):
 
 
 class MeasuresModel(models.Model):
-    instrument = models.ForeignKey(ThermohygrometerModel, on_delete=models.SET_NULL, null=True)
+    instrument = models.ForeignKey(ThermohygrometerModel, on_delete=models.CASCADE, null=True)
     temperature = models.FloatField(editable=False)
     corrected_temperature = models.FloatField(editable=False, null=True, blank=True)
     humidity = models.FloatField(editable=False)
     corrected_humidity = models.FloatField(editable=False, null=True, blank=True)
-    date = models.DateTimeField(editable=False)
+    date = models.DateTimeField(default=timezone.now)
     pn = models.CharField(max_length=100, blank=True, null=True, editable=False)
     sn = models.CharField(max_length=100, blank=True, null=True, editable=False)
-    sensor = models.ForeignKey(SensorModel, on_delete=models.SET_NULL, null=True, related_name='measures')
+    sensor = models.ForeignKey(SensorModel, on_delete=models.CASCADE, null=True, related_name='measures')
 
 
 class CustomUser(AbstractUser):
