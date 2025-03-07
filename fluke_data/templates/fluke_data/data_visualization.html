@@ -13,27 +13,28 @@
     <form method="post">
       {% csrf_token %}
       <div class="form-group">
-        <label for="instrument">Select Instrument:</label>
-        <select id="instrument" name="instrument">
-          {% for thermohygrometer in thermohygrometers %}
-          <option value="{{ thermohygrometer.id }}">
-            {{ thermohygrometer.instrument_name }} (PN: {{ thermohygrometer.pn }}, SN: {{ thermohygrometer.sn }})
+        <label for="sensor">Select Sensor:</label>
+        <select id="sensor" name="sensor" required>
+          {% for sensor in sensors %}
+          <option value="{{ sensor.id }}" {% if selected_sensor.id == sensor.id %}selected{% endif %}>
+            {{ sensor.location }} ({{ sensor.instrument.instrument_name }}, Channel: {{ sensor.channel }})
           </option>
           {% endfor %}
         </select>
       </div>
+      
       <div class="select-data-container">
         <div class="form-group">
           <label for="start_date">Start Date:</label>
-          <input type="date" id="start_date" name="start_date">
+          <input type="date" id="start_date" name="start_date" value="{{ start_date }}" required>
           <label for="start_time">Start Time:</label>
-          <input type="time" id="start_time" name="start_time" value="08:00">
+          <input type="time" id="start_time" name="start_time" value="{{ start_time|default:'08:00' }}" required>
         </div>
         <div class="form-group">
           <label for="end_date">End Date:</label>
-          <input type="date" id="end_date" name="end_date">
+          <input type="date" id="end_date" name="end_date" value="{{ end_date }}" required>
           <label for="end_time">End Time:</label>
-          <input type="time" id="end_time" name="end_time" value="16:00">
+          <input type="time" id="end_time" name="end_time" value="{{ end_time|default:'16:00' }}" required>
         </div>
       </div>
       <button type="submit">Submit</button>
@@ -47,9 +48,12 @@
   <h2>Measured Data</h2>
   <div class="measured-data-container">
     <div class="column">
-      <h3><strong>Instrument</strong></h3>
-      <p>{{ selected_instrument.instrument_name }} (PN: {{ selected_instrument.pn }}, SN: {{ selected_instrument.sn }})
-      </p>
+      <h3><strong>Sensor</strong></h3>
+      <p>{{ selected_sensor.sensor_name }} (Location: {{ selected_sensor.location }})</p>
+      <p>{{ selected_sensor.sensor_pn }} - {{ selected_sensor.sensor_sn }}</p>
+      <p><strong>Instrument:</strong> {{ selected_sensor.instrument.instrument_name }} (PN: {{ selected_sensor.instrument.pn }}, SN: {{ selected_sensor.instrument.sn }})</p>
+      <p><strong>Channel:</strong> {{ selected_sensor.channel }}</p>
+      
       <p><strong>Searched Date Range</strong>
       <p><strong>From:</strong> {{ start_date }} {{ start_time }}
       <p><strong>To:</strong> {{ end_date }} {{ end_time }}</p>
@@ -144,7 +148,7 @@
 </div>
 {% else %}
 {% if request.method == 'POST' %}
-<p>No data found for the selected instrument and time range.</p>
+<p>No data found for the selected sensor and time range.</p>
 {% endif %}
 {% endif %}
 {% endblock %}
@@ -160,37 +164,37 @@
           'X-CSRFToken': '{{ csrf_token }}'
         },
         body: JSON.stringify({
-          instrument_id: {{ selected_instrument.id }},
-        start_date: '{{ start_date }}',
-        start_time: '{{ start_time }}',
-        end_date: '{{ end_date }}',
-        end_time: '{{ end_time }}'
+          sensor_id: {{ selected_sensor.id }},
+          start_date: '{{ start_date }}',
+          start_time: '{{ start_time }}',
+          end_date: '{{ end_date }}',
+          end_time: '{{ end_time }}'
         })
-  });
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to export data');
-  }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to export data');
+      }
 
-  // Criar um blob a partir da resposta
-  const blob = await response.blob();
+      // Criar um blob a partir da resposta
+      const blob = await response.blob();
 
-  // Criar um link temporário para download
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `measured_data_{{ selected_instrument.instrument_name }}_{{ start_date }}_{{ end_date }}.csv`;
-  document.body.appendChild(a);
-  a.click();
+      // Criar um link temporário para download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `measured_data_{{ selected_sensor.sensor_name }}_{{ start_date }}_{{ end_date }}.csv`;
+      document.body.appendChild(a);
+      a.click();
 
-  // Limpar
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+      // Limpar
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
-    console.error('Error:', error);
-    alert('Error exporting data: ' + error.message);
+      console.error('Error:', error);
+      alert('Error exporting data: ' + error.message);
+    }
   }
-}
 </script>
 {% endblock %}

@@ -58,29 +58,31 @@ class DataVisualizationView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        thermohygrometers = ThermohygrometerModel.objects.all().order_by('instrument_name')
-        context['thermohygrometers'] = thermohygrometers
+        # Get all sensors directly instead of instruments
+        context['sensors'] = SensorModel.objects.all().select_related('instrument').order_by('sensor_name')
         return context
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        instrument_id = request.POST.get('instrument')
+        sensor_id = request.POST.get('sensor')
         start_date = request.POST.get('start_date')
         start_time = request.POST.get('start_time')
         end_date = request.POST.get('end_date')
         end_time = request.POST.get('end_time')
 
-        if all([instrument_id, start_date, start_time, end_date, end_time]):
-            selected_instrument = ThermohygrometerModel.objects.get(
-                id=instrument_id)
+        if all([sensor_id, start_date, start_time, end_date, end_time]):
             try:
+                selected_sensor = SensorModel.objects.get(id=sensor_id)
+                context['selected_sensor'] = selected_sensor
+                
                 start_datetime = datetime.strptime(
                     f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
                 end_datetime = datetime.strptime(
                     f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
 
+                # Filter measurements by sensor directly
                 data = MeasuresModel.objects.filter(
-                    instrument=selected_instrument,
+                    sensor=selected_sensor,
                     date__range=[start_datetime, end_datetime]
                 ).order_by('-date')
 
@@ -101,15 +103,14 @@ class DataVisualizationView(TemplateView):
 
                 context.update({
                     'data': data,
-                    'selected_instrument': selected_instrument,
                     'start_date': start_date,
                     'start_time': start_time,
                     'end_date': end_date,
                     'end_time': end_time,
                     'stats': stats,
                 })
-            except ValueError:
-                context['error'] = 'Invalid date or time format.'
+            except (ValueError, SensorModel.DoesNotExist):
+                context['error'] = 'Invalid sensor, date, or time format.'
 
         return self.render_to_response(context)
 
