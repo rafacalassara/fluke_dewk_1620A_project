@@ -321,6 +321,43 @@ th {
     margin-left: 10px;
 }
 
+/* Form styling from certificate templates */
+.form-group {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.calibration-points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.point {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.certificate-form {
+    width: 100%;
+}
+
 /* Label styles */
 label {
     display: block;
@@ -331,23 +368,17 @@ label {
     text-align: center;
 }
 
-
-
-
 /* Margens Inferiores */
 .mb-1 { margin-bottom: var(--space); }
 .mb-2 { margin-bottom: calc(var(--space) * 2); }
 .mb-3 { margin-bottom: calc(var(--space) * 3); }
 
-
 /* Margens Esquerda */
-
 .ml-2 { margin-left: calc(var(--space) * 2); }
 .ml-3 { margin-left: calc(var(--space) * 3); }
 
 .mt-2 { margin-top: calc(var(--space) * 2); }
 .mt-3 { margin-top: calc(var(--space) * 3); }
-
 
 /* Recria a classe d-flex do Bootstrap */
 .d-flex {
