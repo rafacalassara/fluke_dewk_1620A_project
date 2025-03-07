@@ -201,6 +201,18 @@ class CreateCertificateView(LoginRequiredMixin, ManagerRequiredMixin, CreateView
         return response
 
 
+class UpdateCertificateView(LoginRequiredMixin, ManagerRequiredMixin, UpdateView):
+    model = CalibrationCertificateModel
+    form_class = CalibrationCertificateForm
+    template_name = 'fluke_data/certificate/edit_certificate.html'
+    success_url = reverse_lazy('manage_all_certificates')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Certificate updated successfully.')
+        return response
+
+
 class ManageSensorsView(LoginRequiredMixin, ManagerRequiredMixin, DetailView):
     model = ThermohygrometerModel
     template_name = 'fluke_data/sensor/manage_sensors.html'

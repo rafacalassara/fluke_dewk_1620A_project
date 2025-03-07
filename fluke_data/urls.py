@@ -45,6 +45,8 @@ urlpatterns = [
          name='manage_all_certificates'),
     path('create-certificate/', views.CreateCertificateView.as_view(),
          name='create_certificate'),
+    path('edit-certificate/<int:pk>/', views.UpdateCertificateView.as_view(),
+         name='edit_certificate'),
 
     # Intelligence
     path('intelligence/', views.IntelligenceView.as_view(), name='intelligence'),

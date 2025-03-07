@@ -1,0 +1,125 @@
+{% extends "fluke_data/base.html" %}
+
+{% block title %}Edit Calibration Certificate{% endblock %}
+
+{% block content %}
+<style>
+    .form-group {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .calibration-points {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .point {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+</style>
+<div class="container">
+    <h2>Edit Calibration Certificate</h2>
+
+    <div class="certificate-form">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <h3>Certificate Details</h3>
+                {{ form.certificate_number.label_tag }}
+                {{ form.certificate_number }}
+                {{ form.calibration_date.label_tag }}
+                {{ form.calibration_date }}
+                {{ form.next_calibration_date.label_tag }}
+                {{ form.next_calibration_date }}
+            </div>
+
+            <div class="form-group">
+                <h3>Temperature Calibration Points</h3>
+                <div class="calibration-points">
+                    <div class="point">
+                        <h4>Point 1</h4>
+                        {{ form.temp_indication_point_1.label_tag }}
+                        {{ form.temp_indication_point_1 }}
+                        {{ form.temp_correction_1.label_tag }}
+                        {{ form.temp_correction_1 }}
+                    </div>
+                    <div class="point">
+                        <h4>Point 2</h4>
+                        {{ form.temp_indication_point_2.label_tag }}
+                        {{ form.temp_indication_point_2 }}
+                        {{ form.temp_correction_2.label_tag }}
+                        {{ form.temp_correction_2 }}
+                    </div>
+                    <div class="point">
+                        <h4>Point 3</h4>
+                        {{ form.temp_indication_point_3.label_tag }}
+                        {{ form.temp_indication_point_3 }}
+                        {{ form.temp_correction_3.label_tag }}
+                        {{ form.temp_correction_3 }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3>Humidity Calibration Points</h3>
+                <div class="calibration-points">
+                    <div class="point">
+                        <h4>Point 1</h4>
+                        {{ form.humidity_indication_point_1.label_tag }}
+                        {{ form.humidity_indication_point_1 }}
+                        {{ form.humidity_correction_1.label_tag }}
+                        {{ form.humidity_correction_1 }}
+                    </div>
+                    <div class="point">
+                        <h4>Point 2</h4>
+                        {{ form.humidity_indication_point_2.label_tag }}
+                        {{ form.humidity_indication_point_2 }}
+                        {{ form.humidity_correction_2.label_tag }}
+                        {{ form.humidity_correction_2 }}
+                    </div>
+                    <div class="point">
+                        <h4>Point 3</h4>
+                        {{ form.humidity_indication_point_3.label_tag }}
+                        {{ form.humidity_indication_point_3 }}
+                        {{ form.humidity_correction_3.label_tag }}
+                        {{ form.humidity_correction_3 }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3>Uncertainties</h3>
+                {{ form.temp_uncertainty.label_tag }}
+                {{ form.temp_uncertainty }}
+                {{ form.humidity_uncertainty.label_tag }}
+                {{ form.humidity_uncertainty }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'manage_all_certificates' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -18,7 +18,7 @@
                     <th>Certificate Number</th>
                     <th>Calibration Date</th>
                     <th>Next Calibration</th>
-                    <th>Associated Instrument</th>
+                    <th>Associated Instrument / Sensor</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -51,9 +51,10 @@
                 <td>${cert.certificate_number}</td>
                 <td>${new Date(cert.calibration_date).toLocaleDateString()}</td>
                 <td>${new Date(cert.next_calibration_date).toLocaleDateString()}</td>
-                <td>${cert.associated_instrument || 'Not assigned'}</td>
+                <td>${cert.associated_instrument} - ${cert.associated_sensor || 'No sensor assigned'}</td>
                 <td>
-                    <button onclick="deleteCertificate(${cert.id})" class="btn btn-danger">Delete</button>
+                    <a href="/edit-certificate/${cert.id}/" class="btn btn-primary btn-sm">Edit</a>
+                    <button onclick="deleteCertificate(${cert.id})" class="btn btn-danger btn-sm">Delete</button>
                 </td>
             `;
                 tableBody.appendChild(row);
@@ -193,6 +194,12 @@
 
     .btn-danger:hover {
         background-color: #c82333;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        margin-right: 5px;
     }
 </style>
 {% endblock %}
