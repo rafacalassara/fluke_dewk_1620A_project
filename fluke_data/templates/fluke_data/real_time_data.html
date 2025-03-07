@@ -6,12 +6,38 @@
 {% block title %}Real Time Data{% endblock %}
 
 {% block content %}
-    <form id="data-form" class="data-form">
-        <label for="thermohygrometer">Select Thermohygrometer to connect:</label>
-        <select id="thermohygrometer" name="thermohygrometer"></select><br><br>
-        <button type="button" onclick="addThermohygrometer()">Add Thermohygrometer</button>
-    </form>
-    <div id="result-container" class="result-container"></div>
+    <div class="control-panel">
+        <h2>Real-Time Sensor Measurements</h2>
+        <form id="data-form" class="data-form">
+            <div class="form-row" style="display: flex; justify-content: center;">
+                <div class="form-box" style="display: flex; flex-direction: column; align-items: center; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9;">
+                    <strong><label for="thermohygrometer">Select instrument to connect:</label></strong>
+                    <div style="display: flex; align-items: center; margin-top: 8px;">
+                        <select id="thermohygrometer" name="thermohygrometer" class="form-control"></select>
+                        <button type="button" onclick="addThermohygrometer()" class="btn btn-primary">Connect</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="dashboard-layout">
+        <!-- Sidebar for instrument connections -->
+        <div id="connections-sidebar" class="connections-sidebar">
+            <h3>Connected Instruments</h3>
+            <div id="connections-container">
+                <div id="no-instruments-message" class="no-instruments-message">
+                    <p>No instruments connected</p>
+                    <small>Connect an instrument using the form above</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content area for sensors -->
+        <div class="main-content">
+            <div id="result-container" class="result-container"></div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_scripts %}

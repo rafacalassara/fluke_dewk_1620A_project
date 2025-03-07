@@ -31,47 +31,47 @@ async function addThermohygrometer() {
         return;
     }
 
-    const resultContainer = document.getElementById('result-container');
-    const resultDiv = document.createElement('div');
-    resultDiv.id = `result-${selectedThermohygrometer}`;
-    resultDiv.className = 'result';
-    const [thermoName, thermoPNSN] = selectedInstrumentName.split(' - ');
+    // Hide the "no instruments" message when adding a new instrument
+    const noInstrumentsMessage = document.getElementById('no-instruments-message');
+    if (noInstrumentsMessage) {
+        noInstrumentsMessage.style.display = 'none';
+    }
 
-    const connectingMessage = document.createElement('p');
-    connectingMessage.textContent = 'Connecting...';
-    resultDiv.appendChild(connectingMessage);
+    // Create connection card for sidebar
+    const connectionsContainer = document.getElementById('connections-container');
     
-    // Create header container with flex layout
-    const headerContainer = document.createElement('div');
-    headerContainer.className = 'instrument-header';
+    const connectionCard = document.createElement('div');
+    connectionCard.id = `connection-card-${selectedThermohygrometer}`;
+    connectionCard.className = 'connection-card';
     
-    // Add the header text
-    const resultHeader = document.createElement('h3');
-    resultHeader.textContent = thermoName;
-    headerContainer.appendChild(resultHeader);
+    // Create header with name and status indicator
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'connection-card-header';
     
-    // Add close button
-    const closeButton = document.createElement('button');
-    closeButton.className = 'close-button';
-    closeButton.innerHTML = '&times;'; // × symbol
-    closeButton.title = 'Disconnect instrument';
-    closeButton.onclick = () => closeConnection(selectedThermohygrometer);
-    headerContainer.appendChild(closeButton);
+    const nameTextShort = selectedInstrumentName.split(' - ')[0]; // Just get the instrument name
     
-    // Add the header container to result div
-    resultDiv.appendChild(headerContainer);
-
-    const resultSubHeader = document.createElement('p');
-    resultSubHeader.textContent = thermoPNSN;
-    resultDiv.appendChild(resultSubHeader);
-
-    resultContainer.appendChild(resultDiv);
-
-    // Create a container for sensors
-    const sensorsContainer = document.createElement('div');
-    sensorsContainer.className = 'sensors-container';
-    sensorsContainer.id = `sensors-${selectedThermohygrometer}`;
-    resultDiv.appendChild(sensorsContainer);
+    cardHeader.innerHTML = `
+        <p class="connection-name" title="${selectedInstrumentName}">
+            <span class="connection-status-indicator"></span>
+            ${nameTextShort}
+        </p>
+    `;
+    
+    // Create connection message
+    const connectionMessage = document.createElement('p');
+    connectionMessage.className = 'connection-message';
+    connectionMessage.textContent = 'Connecting...';
+    
+    // Create actions div with disconnect button
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'connection-card-actions';
+    
+    connectionCard.appendChild(cardHeader);
+    connectionCard.appendChild(connectionMessage);
+    connectionCard.appendChild(actionsDiv);
+    
+    // Add to connections container
+    connectionsContainer.appendChild(connectionCard);
 
     let reconnectAttempts = 0;
 
@@ -82,8 +82,20 @@ async function addThermohygrometer() {
 
         ws.onopen = function () {
             console.log(`WebSocket connection opened for ${selectedInstrumentName}`);
-            if (resultDiv.contains(connectingMessage)) {
-                resultDiv.removeChild(connectingMessage);
+            
+            // Update the connection card in sidebar
+            const connectionCard = document.getElementById(`connection-card-${selectedThermohygrometer}`);
+            if (connectionCard) {
+                const statusIndicator = connectionCard.querySelector('.connection-status-indicator');
+                statusIndicator.style.backgroundColor = '#28a745'; // Green for connected
+                
+                const connectionMessage = connectionCard.querySelector('.connection-message');
+                connectionMessage.textContent = 'Connected';
+                connectionMessage.style.color = '#28a745';
+                
+                // Add disconnect button to actions
+                const actionsDiv = connectionCard.querySelector('.connection-card-actions');
+                actionsDiv.innerHTML = `<button class="btn btn-sm btn-danger" onclick="closeConnection('${selectedThermohygrometer}')">Disconnect</button>`;
             }
         };
 
@@ -98,6 +110,9 @@ async function addThermohygrometer() {
                 console.log(`No data received for ${selectedInstrumentName}`);
                 return;
             }
+            
+            // Get reference to the result container
+            const resultContainer = document.getElementById('result-container');
             
             // Get sensor data
             const sensorData = data.data;
@@ -120,6 +135,11 @@ async function addThermohygrometer() {
             const minHumidity = thermoInfo.min_humidity ?? -Infinity;
             const maxHumidity = thermoInfo.max_humidity ?? Infinity;
 
+            // Get instrument information
+            const instrumentName = thermoInfo.instrument_name;
+            const instrumentPN = thermoInfo.pn;
+            const instrumentSN = thermoInfo.sn;
+
             // Get styles based on limits
             const getStyle = (value, min, max) => (value < min || value > max) ? 'color: red;' : 'color: black;';
             const temperatureStyle = getStyle(temperature, minTemperature, maxTemperature);
@@ -127,72 +147,48 @@ async function addThermohygrometer() {
             const humidityStyle = getStyle(humidity, minHumidity, maxHumidity);
             const correctedHumidityStyle = getStyle(correctedHumidity, minHumidity, maxHumidity);
 
-            // Check if we already have a container for this sensor
-            let sensorDiv = document.getElementById(`sensor-${sensorId}`);
-            if (!sensorDiv) {
-                sensorDiv = document.createElement('div');
-                sensorDiv.id = `sensor-${sensorId}`;
-                sensorDiv.className = 'sensor-box';
+            // Create or update sensor box
+            let sensorBox = document.getElementById(`sensor-${sensorId}`);
+            if (!sensorBox) {
+                sensorBox = document.createElement('div');
+                sensorBox.id = `sensor-${sensorId}`;
+                sensorBox.className = 'sensor-box';
+                sensorBox.dataset.thermohygrometerKey = selectedThermohygrometer;
                 
-                const sensorHeader = document.createElement('div');
-                sensorHeader.className = 'sensor-header';
-                
-                const sensorTitle = document.createElement('h4');
-                sensorTitle.textContent = `${sensorName} - ${location}`;
-                sensorHeader.appendChild(sensorTitle);
-                
-                const channelBadge = document.createElement('span');
-                channelBadge.className = 'channel-badge';
-                channelBadge.textContent = `CH ${channel}`;
-                sensorHeader.appendChild(channelBadge);
-                
-                sensorDiv.appendChild(sensorHeader);
-                
-                sensorsContainer.appendChild(sensorDiv);
-                
-                // Add CSS to make the sensor boxes look good
-                const style = document.createElement('style');
-                if (!document.getElementById('sensor-box-styles')) {
-                    style.id = 'sensor-box-styles';
-                    style.textContent = '/* Styles merged with instrument-styles */';
-                    document.head.appendChild(style);
-                }
+                resultContainer.appendChild(sensorBox);
             }
 
-            let formattedData = `
-                <table>
-                    <tr>
-                        <th>Measurement</th>
-                        <th>Non Corrected</th>
-                        <th>Corrected</th>
-                    </tr>
-                    <tr>
-                        <td>Temperature</td>
-                        <td style="${temperatureStyle}">${temperature} °C</td>
-                        <td style="${correctedTemperatureStyle}">${correctedTemperature} °C</td>
-                    </tr>
-                    <tr>
-                        <td>Humidity</td>
-                        <td style="${humidityStyle}">${humidity} %</td>
-                        <td style="${correctedHumidityStyle}">${correctedHumidity} %</td>
-                    </tr>
-                </table>
+            // Update sensor box content
+            sensorBox.innerHTML = `
+                <div class="sensor-header">
+                    <h4>${sensorName} - ${location}</h4>
+                    <span class="channel-badge">CH ${channel}</span>
+                </div>
+                <div class="sensor-content">
+                    <table>
+                        <tr>
+                            <th>Measurement</th>
+                            <th>Raw</th>
+                            <th>Corrected</th>
+                        </tr>
+                        <tr>
+                            <td>Temperature</td>
+                            <td style="${temperatureStyle}">${temperature} °C</td>
+                            <td style="${correctedTemperatureStyle}">${correctedTemperature} °C</td>
+                        </tr>
+                        <tr>
+                            <td>Humidity</td>
+                            <td style="${humidityStyle}">${humidity} %</td>
+                            <td style="${correctedHumidityStyle}">${correctedHumidity} %</td>
+                        </tr>
+                    </table>
+                    ${date ? `<p class="timestamp">Timestamp: ${date}</p>` : ''}
+                </div>
+                <div class="instrument-info">
+                    <h5>${instrumentName}</h5>
+                    <p>P/N: ${instrumentPN} | S/N: ${instrumentSN}</p>
+                </div>
             `;
-
-            if (date) {
-                formattedData += `<p class="timestamp">Instrument Date: ${date}</p>`;
-            }
-
-            // Update the sensor content (keeping its header)
-            const sensorContent = sensorDiv.querySelector('.sensor-content');
-            if (sensorContent) {
-                sensorContent.innerHTML = formattedData;
-            } else {
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'sensor-content';
-                contentDiv.innerHTML = formattedData;
-                sensorDiv.appendChild(contentDiv);
-            }
         };
 
         ws.onerror = function (error) {
@@ -207,12 +203,19 @@ async function addThermohygrometer() {
     }
 
     function handleReconnection() {
-        resultDiv.querySelectorAll('.reconnect-message').forEach(msg => msg.remove());
-
-        const reconnectMessage = document.createElement('p');
-        reconnectMessage.className = 'reconnect-message';
-        reconnectMessage.textContent = `Reconnecting to ${thermoName}... (Attempt ${reconnectAttempts + 1} of ${MAX_RECONNECT_ATTEMPTS})`;
-        resultDiv.appendChild(reconnectMessage);
+        const connectionCard = document.getElementById(`connection-card-${selectedThermohygrometer}`);
+        if (connectionCard) {
+            const statusIndicator = connectionCard.querySelector('.connection-status-indicator');
+            if (statusIndicator) {
+                statusIndicator.style.backgroundColor = '#dc3545'; // Red for disconnected
+            }
+            
+            const connectionMessage = connectionCard.querySelector('.connection-message');
+            if (connectionMessage) {
+                connectionMessage.textContent = `Reconnecting... (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`;
+                connectionMessage.style.color = '#dc3545';
+            }
+        }
 
         delete thermohygrometerConnections[selectedThermohygrometer];
         reconnectAttempts += 1;
@@ -220,169 +223,20 @@ async function addThermohygrometer() {
         if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
             setTimeout(createWebSocket, RECONNECT_DELAY);
         } else {
-            resultDiv.querySelectorAll('.reconnect-message').forEach(msg => msg.remove());
-
-            if (!resultDiv.querySelector('.failure-message')) {
-                const failureMessage = document.createElement('p');
-                failureMessage.className = 'failure-message';
-                failureMessage.textContent = `Failed to reconnect to ${thermoName} after ${MAX_RECONNECT_ATTEMPTS} attempts. Please check the instrument and try again.`;
-                resultDiv.appendChild(failureMessage);
-
-                const removeButton = document.createElement('button');
-                removeButton.textContent = 'Remove Instrument';
-                removeButton.onclick = () => removeInstrument(selectedThermohygrometer);
-                resultDiv.appendChild(removeButton);
+            if (connectionCard) {
+                connectionCard.classList.add('disconnected');
+                
+                const connectionMessage = connectionCard.querySelector('.connection-message');
+                if (connectionMessage) {
+                    connectionMessage.textContent = 'Connection failed';
+                }
+                
+                const actionsDiv = connectionCard.querySelector('.connection-card-actions');
+                if (actionsDiv) {
+                    actionsDiv.innerHTML = `<button class="btn btn-sm btn-secondary" onclick="removeInstrument('${selectedThermohygrometer}')">Remove</button>`;
+                }
             }
         }
-    }
-
-    // Add CSS for the instrument header and close button
-    const style = document.createElement('style');
-    if (!document.getElementById('instrument-styles')) {
-        style.id = 'instrument-styles';
-        style.textContent = `
-            .result {
-                background-color: white;
-                border-radius: 10px;
-                box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-                padding: 15px;
-                margin-bottom: 20px;
-                border: 1px solid #ddd;
-            }
-            .instrument-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 10px;
-                padding-bottom: 8px;
-                border-bottom: 2px solid #eaeaea;
-            }
-            .instrument-header h3 {
-                margin: 0;
-                font-size: 1.5em;
-                color: #2c3e50;
-            }
-            .close-button {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 30px;
-                height: 30px;
-                font-size: 20px;
-                line-height: 0;
-                cursor: pointer;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                transition: all 0.2s;
-            }
-            .close-button:hover {
-                background-color: #c0392b;
-                transform: scale(1.1);
-            }
-            .sensors-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 20px;
-                margin-top: 15px;
-            }
-            .sensor-box {
-                flex: 1 0 300px;
-                min-width: 300px;
-                max-width: 450px;
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                padding: 15px;
-                background-color: #f9f9f9;
-                transition: transform 0.2s;
-            }
-            .sensor-box:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            }
-            .sensor-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 1px solid #eee;
-                padding-bottom: 8px;
-                margin-bottom: 10px;
-            }
-            .sensor-header h4 {
-                margin: 0;
-                font-size: 16px;
-                font-weight: bold;
-                color: #2c3e50;
-            }
-            .channel-badge {
-                background-color: #3498db;
-                color: white;
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-size: 12px;
-                font-weight: bold;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }
-            .sensor-content table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 12px;
-            }
-            .sensor-content th, .sensor-content td {
-                padding: 10px;
-                border-bottom: 1px solid #eee;
-                text-align: left;
-            }
-            .sensor-content th {
-                background-color: #f2f2f2;
-                font-weight: 600;
-                color: #555;
-            }
-            .sensor-content td:first-child {
-                text-align: left;
-                font-weight: bold;
-                width: 30%;
-            }
-            .sensor-content td:nth-child(2), .sensor-content td:nth-child(3) {
-                text-align: right;
-                width: 35%;
-            }
-            .timestamp {
-                font-size: 0.9em;
-                color: #777;
-                text-align: right;
-                margin-top: 10px;
-                margin-bottom: 0;
-                font-style: italic;
-            }
-            .reconnect-message, .failure-message {
-                color: #e74c3c;
-                margin: 10px 0;
-                padding: 8px;
-                background-color: #fadbd8;
-                border-radius: 4px;
-                border-left: 4px solid #e74c3c;
-            }
-            .failure-message {
-                margin-bottom: 15px;
-            }
-            .failure-message + button {
-                background-color: #3498db;
-                color: white;
-                border: none;
-                padding: 8px 15px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: bold;
-                transition: background-color 0.2s;
-            }
-            .failure-message + button:hover {
-                background-color: #2980b9;
-            }
-        `;
-        document.head.appendChild(style);
     }
 
     createWebSocket();
@@ -394,15 +248,39 @@ function closeConnection(id) {
         if (connection.readyState === WebSocket.OPEN) {
             connection.send(JSON.stringify({ command: 'disconnect' }));
         }
-        connection.onclose = () => {
-            console.log(`WebSocket connection closed for instrument with id: ${id}`);
-            removeResultDiv(id);
-        };
+        connection.onclose = null; // Prevent the normal onclose handler
         connection.close();
-    } else {
-        console.log(`No active WebSocket connection found for instrument with id: ${id}`);
-        removeResultDiv(id);
+        console.log(`WebSocket connection closed for instrument with id: ${id}`);
     }
+    
+    // Update the connection card in sidebar
+    const connectionCard = document.getElementById(`connection-card-${id}`);
+    if (connectionCard) {
+        connectionCard.classList.add('disconnected');
+        
+        const statusIndicator = connectionCard.querySelector('.connection-status-indicator');
+        if (statusIndicator) {
+            statusIndicator.style.backgroundColor = '#dc3545'; // Red for disconnected
+        }
+        
+        const connectionMessage = connectionCard.querySelector('.connection-message');
+        if (connectionMessage) {
+            connectionMessage.textContent = 'Disconnected';
+            connectionMessage.style.color = '#dc3545';
+        }
+        
+        const actionsDiv = connectionCard.querySelector('.connection-card-actions');
+        if (actionsDiv) {
+            actionsDiv.innerHTML = `<button class="btn btn-sm btn-secondary" onclick="removeInstrument('${id}')">Remove</button>`;
+        }
+    }
+    
+    // Remove all sensor boxes associated with this thermohygrometer
+    document.querySelectorAll(`.sensor-box[data-thermohygrometer-key="${id}"]`).forEach(box => {
+        box.remove();
+    });
+    
+    delete thermohygrometerConnections[id];
 }
 
 function removeResultDiv(id) {
@@ -416,5 +294,36 @@ function removeResultDiv(id) {
 }
 
 function removeInstrument(id) {
-    removeResultDiv(id);
+    // Remove the connection card from sidebar
+    const connectionCard = document.getElementById(`connection-card-${id}`);
+    if (connectionCard) {
+        connectionCard.remove();
+    }
+    
+    // Remove all sensor boxes associated with this thermohygrometer
+    document.querySelectorAll(`.sensor-box[data-thermohygrometer-key="${id}"]`).forEach(box => {
+        box.remove();
+    });
+    
+    delete thermohygrometerConnections[id];
+
+    // Check if there are no more instruments connected
+    const connectionsContainer = document.getElementById('connections-container');
+    if (connectionsContainer && !connectionsContainer.querySelector('.connection-card')) {
+        // Show the "no instruments" message again
+        const noInstrumentsMessage = document.getElementById('no-instruments-message');
+        if (noInstrumentsMessage) {
+            noInstrumentsMessage.style.display = 'block';
+        } else {
+            // If the message doesn't exist, create it
+            const newMessage = document.createElement('div');
+            newMessage.id = 'no-instruments-message';
+            newMessage.className = 'no-instruments-message';
+            newMessage.innerHTML = `
+                <p>No instruments connected</p>
+                <small>Connect an instrument using the form above</small>
+            `;
+            connectionsContainer.appendChild(newMessage);
+        }
+    }
 }
