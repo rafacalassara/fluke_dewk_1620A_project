@@ -21,23 +21,23 @@
           </option>
           {% endfor %}
         </select>
-      </div>
-      
-      <div class="select-data-container">
-        <div class="form-group">
-          <label for="start_date">Start Date:</label>
-          <input type="date" id="start_date" name="start_date" value="{{ start_date }}" required>
-          <label for="start_time">Start Time:</label>
-          <input type="time" id="start_time" name="start_time" value="{{ start_time|default:'08:00' }}" required>
+        
+        <div class="select-data-container">
+          <div class="form-group">
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" value="{{ start_date }}" required>
+            <label for="start_time">Start Time:</label>
+            <input type="time" id="start_time" name="start_time" value="{{ start_time|default:'08:00' }}" required>
+          </div>
+          <div class="form-group">
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" name="end_date" value="{{ end_date }}" required>
+            <label for="end_time">End Time:</label>
+            <input type="time" id="end_time" name="end_time" value="{{ end_time|default:'16:00' }}" required>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="end_date">End Date:</label>
-          <input type="date" id="end_date" name="end_date" value="{{ end_date }}" required>
-          <label for="end_time">End Time:</label>
-          <input type="time" id="end_time" name="end_time" value="{{ end_time|default:'16:00' }}" required>
-        </div>
+        <button type="submit">Submit</button>
       </div>
-      <button type="submit">Submit</button>
     </form>
   </div>
 </div>
@@ -164,7 +164,7 @@
           'X-CSRFToken': '{{ csrf_token }}'
         },
         body: JSON.stringify({
-          sensor_id: {{ selected_sensor.id }},
+          sensor_id: '{{ selected_sensor.id }}',
           start_date: '{{ start_date }}',
           start_time: '{{ start_time }}',
           end_date: '{{ end_date }}',
