@@ -162,7 +162,6 @@ async function addThermohygrometer() {
             sensorBox.innerHTML = `
                 <div class="sensor-header">
                     <h4>${sensorName} - ${location}</h4>
-                    <span class="channel-badge">CH ${channel}</span>
                 </div>
                 <div class="sensor-content">
                     <table>
@@ -182,11 +181,12 @@ async function addThermohygrometer() {
                             <td style="${correctedHumidityStyle}">${correctedHumidity} %</td>
                         </tr>
                     </table>
-                    ${date ? `<p class="timestamp">Timestamp: ${date}</p>` : ''}
+                    ${date ? `<p class="timestamp"><strong>Instrument Date: </strong>${date}</p>` : ''}
                 </div>
                 <div class="instrument-info">
                     <h5>${instrumentName}</h5>
                     <p>P/N: ${instrumentPN} | S/N: ${instrumentSN}</p>
+                    <span class="channel-badge">CH ${channel}</span>
                 </div>
             `;
         };

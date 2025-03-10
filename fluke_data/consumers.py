@@ -86,7 +86,6 @@ class DataConsumer(AsyncWebsocketConsumer):
             print(f"Error initializing consumer: {str(e)}")
         
         self.group_name = f"thermohygrometer_{self.instrument.GROUP_NAME}" if hasattr(self, 'instrument') else f"thermohygrometer_error"
-        self.listener_group_name = f'thermo_{self.thermohygrometer_id}'
         self.running = True
 
     async def add_to_group(self):
@@ -133,10 +132,23 @@ class DataConsumer(AsyncWebsocketConsumer):
                 'data': data,
             }
         )
+        
+        # Create a unique group name for this specific sensor
+        sensor_group_name = f'thermo_{self.thermohygrometer_id}_sensor_{sensor.id}'
 
-        # Forward the data to the listener_consumer_group
+        # Forward the data to the specific sensor group for listeners
         await self.channel_layer.group_send(
-            self.listener_group_name,
+            sensor_group_name,
+            {
+                "type": "send_data_to_listeners",
+                "message": json.dumps(data)
+            }
+        )
+        
+        # Also send to the general thermohygrometer group for listeners who want all sensors
+        general_group_name = f'thermo_{self.thermohygrometer_id}'
+        await self.channel_layer.group_send(
+            general_group_name,
             {
                 "type": "send_data_to_listeners",
                 "message": json.dumps(data)
@@ -243,140 +255,33 @@ class DataConsumer(AsyncWebsocketConsumer):
 class ListenerConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.thermohygrometer_id = self.scope['url_route']['kwargs']['thermohygrometer_id']
-        thermo = await sync_to_async(self.get_thermohygrometer)(self.thermohygrometer_id)
-        self.listener_group_name = f'thermo_{thermo.id}'
-
-        await self.channel_layer.group_add(self.listener_group_name, self.channel_name)
-        await self.accept()
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.listener_group_name, self.channel_name)
-
-    async def send_data_to_listeners(self, event):
-        message = event['message']
-        await self.send(text_data=message)
-
-    def get_thermohygrometer(self, thermohygrometer_id):
-        return ThermohygrometerModel.objects.get(id=thermohygrometer_id)
-
-
-class ThermohygrometerConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.thermohygrometer_id = self.scope['url_route']['kwargs']['thermohygrometer_id']
-        thermo = await sync_to_async(self.get_thermohygrometer)(self.thermohygrometer_id)
-        self.listener_group_name = f'thermo_{thermo.id}'
-
-        await self.channel_layer.group_add(self.listener_group_name, self.channel_name)
-        await self.accept()
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.listener_group_name, self.channel_name)
-
-    async def send_data_to_listeners(self, event):
-        message = event['message']
-        await self.send(text_data=message)
-
-    async def send_data(self):
-        sensors = await sync_to_async(list)(
-            SensorModel.objects.filter(instrument=self.thermo)
-        )
+        self.sensor_id = self.scope['url_route']['kwargs'].get('sensor_id', None)
         
-        try:
-            instrument = Instrument(ip_address=self.thermo.ip_address)
-            await sync_to_async(instrument.connect)()
-            
-            data_all_channels = await sync_to_async(instrument.get_live_data_all_channels)()
-            
-            if not data_all_channels:
-                await self.send(text_data=json.dumps({
-                    'error': 'Error reading data from thermohygrometer'
-                }))
-                return
-                
-            for sensor in sensors:
-                channel_data = data_all_channels.get(sensor.channel)
-                if not channel_data:
-                    continue
-                
-                temperature = channel_data.get('temperature')
-                humidity = channel_data.get('humidity')
-                date = channel_data.get('date')
-                
-                corrected_temperature = temperature
-                corrected_humidity = humidity
-                
-                # Use sensor-specific calibration certificate
-                if hasattr(sensor, 'calibration_certificate') and sensor.calibration_certificate:
-                    corrected_temperature = await sync_to_async(instrument.apply_correction)(
-                        sensor.calibration_certificate, 'temperature', temperature
-                    )
-                    corrected_humidity = await sync_to_async(instrument.apply_correction)(
-                        sensor.calibration_certificate, 'humidity', humidity
-                    )
-                else:
-                    corrected_temperature = 'No Calibration Certificate'
-                    corrected_humidity = 'No Calibration Certificate'
-                
-                min_temp = sensor.min_temperature
-                max_temp = sensor.max_temperature
-                min_humidity = sensor.min_humidity
-                max_humidity = sensor.max_humidity
-                
-                if min_temp is None:
-                    min_temp = self.thermo.min_temperature
-                if max_temp is None:
-                    max_temp = self.thermo.max_temperature
-                if min_humidity is None:
-                    min_humidity = self.thermo.min_humidity
-                if max_humidity is None:
-                    max_humidity = self.thermo.max_humidity
-                
-                temperature_style = 'black'
-                humidity_style = 'black'
-                corrected_temperature_style = 'black'
-                corrected_humidity_style = 'black'
-                
-                if temperature < min_temp or temperature > max_temp:
-                    temperature_style = 'red'
-                if humidity < min_humidity or humidity > max_humidity:
-                    humidity_style = 'red'
+        # Get the thermohygrometer and store it in an instance variable
+        self.thermo = await sync_to_async(self.get_thermohygrometer)(self.thermohygrometer_id)
+        
+        # If a sensor_id is provided, subscribe to that specific sensor's group
+        if self.sensor_id:
+            self.listener_group_name = f'thermo_{self.thermohygrometer_id}_sensor_{self.sensor_id}'
+        else:
+            # Otherwise, subscribe to all data for this thermohygrometer
+            self.listener_group_name = f'thermo_{self.thermohygrometer_id}'
 
-                if hasattr(sensor, 'calibration_certificate') and sensor.calibration_certificate:
-                    if corrected_temperature < min_temp or corrected_temperature > max_temp:
-                        corrected_temperature_style = 'red'
-                    if corrected_humidity < min_humidity or corrected_humidity > max_humidity:
-                        corrected_humidity_style = 'red'
-                else:
-                    corrected_temperature_style = 'red'
-                    corrected_humidity_style = 'red'
-                
-                await self.send(text_data=json.dumps({
-                    'data': {
-                        'sensor_id': sensor.id,
-                        'sensor_name': sensor.sensor_name,
-                        'location': sensor.location,
-                        'channel': sensor.channel,
-                        'temperature': temperature,
-                        'humidity': humidity,
-                        'corrected_temperature': corrected_temperature,
-                        'corrected_humidity': corrected_humidity,
-                        'date': date,
-                        'temperature_style': temperature_style,
-                        'corrected_temperature_style': corrected_temperature_style,
-                        'humidity_style': humidity_style,
-                        'corrected_humidity_style': corrected_humidity_style,
-                        'thermo_info': {
-                            'id': self.thermo.id,
-                            'instrument_name': self.thermo.instrument_name,
-                            'min_temperature': min_temp,
-                            'max_temperature': max_temp,
-                            'min_humidity': min_humidity,
-                            'max_humidity': max_humidity,
-                        }
-                    }
-                }))
-        except Exception as e:
-            self.log_error(f"Error occurred: {str(e)}")
+        await self.channel_layer.group_add(self.listener_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.listener_group_name, self.channel_name)
+
+    async def send_data_to_listeners(self, event):
+        message = event['message']
+        await self.send(text_data=message)
 
     def get_thermohygrometer(self, thermohygrometer_id):
-        return ThermohygrometerModel.objects.get(id=thermohygrometer_id)
+        thermo = ThermohygrometerModel.objects.get(id=thermohygrometer_id)
+        
+        # Store sensors as an instance variable if needed
+        if hasattr(self, 'thermo'):
+            self.sensors = SensorModel.objects.filter(instrument=thermo)
+            
+        return thermo

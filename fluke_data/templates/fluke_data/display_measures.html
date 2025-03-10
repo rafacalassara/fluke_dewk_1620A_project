@@ -4,11 +4,15 @@
 
 {% load static %}
 
-{% block title %}Display Measures{% endblock %}
+{% block title %}Sensor Measurements{% endblock %}
 
 {% block content %}
-    <h1>Connected Thermohygrometers</h1>
-    <div id="measures-container" class="result-container"></div>
+    <div class="container">
+        <h1>Connected Sensors</h1>
+        <p class="text-center">Displaying real-time data from all connected sensors</p>
+        
+        <div id="measures-container" class="result-container"></div>
+    </div>
 {% endblock %}
 
 {% block extra_scripts %}
