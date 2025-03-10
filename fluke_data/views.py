@@ -252,3 +252,16 @@ class CreateSensorView(LoginRequiredMixin, ManagerRequiredMixin, CreateView):
         thermohygrometer = ThermohygrometerModel.objects.get(id=self.kwargs['thermohygrometer_id'])
         context['thermohygrometer'] = thermohygrometer
         return context
+
+class DeleteSensorView(LoginRequiredMixin, ManagerRequiredMixin, DeleteView):
+    model = SensorModel
+    template_name = 'fluke_data/sensor/delete_sensor.html'
+    
+    def get_success_url(self):
+        return reverse('manage_sensors', kwargs={'thermohygrometer_id': self.object.instrument.id})
+    
+    def delete(self, request, *args, **kwargs):
+        sensor = self.get_object()
+        thermohygrometer_id = sensor.instrument.id
+        messages.success(request, 'Sensor deleted successfully.')
+        return super().delete(request, *args, **kwargs)

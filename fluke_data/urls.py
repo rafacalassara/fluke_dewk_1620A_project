@@ -63,6 +63,7 @@ urlpatterns = [
     # New route
     path('manage-sensors/<int:thermohygrometer_id>/', views.ManageSensorsView.as_view(), name='manage_sensors'),
     path('update-sensor/<int:pk>/', views.UpdateSensorView.as_view(), name='update_sensor'),
+    path('delete-sensor/<int:pk>/', views.DeleteSensorView.as_view(), name='delete_sensor'),
 
     # New route for creating sensor
     path('thermohygrometers/<int:thermohygrometer_id>/sensors/create/', views.CreateSensorView.as_view(), name='create_sensor'),
