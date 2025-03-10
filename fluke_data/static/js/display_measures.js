@@ -2,8 +2,10 @@
 
 document.addEventListener('DOMContentLoaded', async function () {
     const measuresContainer = document.getElementById('measures-container');
+    const loadingSpinner = document.getElementById('loading-spinner');
     let sensorBoxes = {}; // Track created sensor boxes
     let webSockets = {}; // Track active WebSocket connections
+    let dataReceived = false; // Track if we've received any data
 
     // Fetch the list of connected thermohygrometers
     try {
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.log('Connected thermohygrometers:', thermohygrometers);
         
         if (thermohygrometers.length === 0) {
+            hideLoadingSpinner();
             measuresContainer.innerHTML = `
                 <div class="no-instruments-message">
                     <p>No instruments connected</p>
@@ -30,9 +33,27 @@ document.addEventListener('DOMContentLoaded', async function () {
                 console.error(`Error connecting to thermohygrometer ${thermo.id}:`, error);
             }
         }
+        
+        // Set a timeout to hide the spinner if we don't get data in a reasonable time
+        setTimeout(function() {
+            if (!dataReceived) {
+                hideLoadingSpinner();
+                if (Object.keys(sensorBoxes).length === 0) {
+                    measuresContainer.innerHTML = '<p>No data received from instruments. Please check connections.</p>';
+                }
+            }
+        }, 10000); // 10 seconds timeout
+        
     } catch (error) {
         console.error('Error fetching thermohygrometers:', error);
+        hideLoadingSpinner();
         measuresContainer.innerHTML = '<p>Error loading connected instruments. Please try again later.</p>';
+    }
+
+    function hideLoadingSpinner() {
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'none';
+        }
     }
 
     function connectThermoWebSocket(thermoId) {
@@ -73,6 +94,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function updateOrCreateSensorBox(sensorData) {
+        // Mark that we've received data
+        if (!dataReceived) {
+            dataReceived = true;
+            hideLoadingSpinner();
+        }
+        
         // Parse the data - handle both direct data and data.data structures
         const data = sensorData.data ? sensorData.data : sensorData;
         
