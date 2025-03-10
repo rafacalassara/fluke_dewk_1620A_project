@@ -10,6 +10,7 @@ class Thermohygrometer:
     SN: str
     PN: str
     INSTRUMENT_NAME: str
+    INSTRUMENT_LOCATION: str
     SENSOR_SN: str
     SENSOR_PN: str
     GROUP_NAME: str = ''

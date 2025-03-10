@@ -134,11 +134,12 @@ async function addThermohygrometer() {
             const maxTemperature = thermoInfo.max_temperature ?? Infinity;
             const minHumidity = thermoInfo.min_humidity ?? -Infinity;
             const maxHumidity = thermoInfo.max_humidity ?? Infinity;
-
+            
             // Get instrument information
             const instrumentName = thermoInfo.instrument_name;
             const instrumentPN = thermoInfo.pn;
             const instrumentSN = thermoInfo.sn;
+            const instrumentLocation = thermoInfo.instrument_location;
 
             // Get styles based on limits
             const getStyle = (value, min, max) => (value < min || value > max) ? 'color: red;' : 'color: black;';
@@ -161,7 +162,7 @@ async function addThermohygrometer() {
             // Update sensor box content
             sensorBox.innerHTML = `
                 <div class="sensor-header">
-                    <h4>${sensorName} - ${location}</h4>
+                    <h4>${location}</h4>
                 </div>
                 <div class="sensor-content">
                     <table>
@@ -184,9 +185,10 @@ async function addThermohygrometer() {
                     ${date ? `<p class="timestamp"><strong>Instrument Date: </strong>${date}</p>` : ''}
                 </div>
                 <div class="instrument-info">
-                    <h5>${instrumentName}</h5>
+                    <h5>${instrumentName}  <span class="channel-badge">CH ${channel}</span></h5>
+                    <p>Termohigrometro na: ${instrumentLocation}</p>
                     <p>P/N: ${instrumentPN} | S/N: ${instrumentSN}</p>
-                    <span class="channel-badge">CH ${channel}</span>
+                    
                 </div>
             `;
         };

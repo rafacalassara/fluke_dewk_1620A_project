@@ -39,7 +39,8 @@ class CalibrationCertificateModel(models.Model):
 class ThermohygrometerModel(models.Model):
     ip_address = models.CharField(max_length=100)
     is_connected = models.BooleanField(default=False)
-    time_interval_to_save_measures = models.IntegerField(default=60)
+    time_interval_to_save_measures = models.IntegerField(default=5)
+    equipment_fisical_location = models.CharField(max_length=100, null=True, blank=True, default='')
     pn = models.CharField(max_length=100)
     sn = models.CharField(max_length=100)
     instrument_name = models.CharField(max_length=100)

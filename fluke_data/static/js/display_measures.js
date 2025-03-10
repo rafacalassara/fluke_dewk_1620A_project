@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const instrumentName = thermoInfo.instrument_name || 'Unknown Instrument';
         const instrumentPN = thermoInfo.pn || 'N/A';
         const instrumentSN = thermoInfo.sn || 'N/A';
+        const instrumentLocation = thermoInfo.instrument_location || 'Unknown Location';
 
         // Get styles based on limits
         const getStyle = (value, min, max) => (value < min || value > max) ? 'color: red;' : 'color: black;';
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Update sensor box content
         sensorBoxes[boxKey].innerHTML = `
             <div class="sensor-header">
-                <h4>${sensorName} - ${location}</h4>
+                <h4>${location}</h4>
             </div>
             <div class="sensor-content">
                 <table>
@@ -155,9 +156,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 ${date ? `<p class="timestamp"><strong>Instrument Date: </strong>${date}</p>` : ''}
             </div>
             <div class="instrument-info">
-                <h5>${instrumentName}</h5>
+                <h5>${instrumentName}  <span class="channel-badge">CH ${channel}</span></h5>
+                <p>Termohigrometro na: ${instrumentLocation}</p>
                 <p>P/N: ${instrumentPN} | S/N: ${instrumentSN}</p>
-                <span class="channel-badge">CH ${channel}</span>
+                
             </div>
         `;
     }

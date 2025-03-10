@@ -111,6 +111,7 @@ class ThermohygrometerForm(forms.ModelForm):
         fields = [
             'instrument_name', 'ip_address',
             'time_interval_to_save_measures',
+            'equipment_fisical_location',
             'pn', 'sn',
             'group_name', 'calibration_certificate',
             'min_temperature', 'max_temperature',
@@ -120,6 +121,7 @@ class ThermohygrometerForm(forms.ModelForm):
             'instrument_name': forms.TextInput(attrs={'class': 'form-control'}),
             'ip_address': forms.TextInput(attrs={'class': 'form-control'}),
             'time_interval_to_save_measures': forms.TextInput(attrs={'class': 'form-control'}),
+            'equipment_fisical_location':forms.TextInput(attrs={'class': 'form-control'}),
             'pn': forms.TextInput(attrs={'class': 'form-control'}),
             'sn': forms.TextInput(attrs={'class': 'form-control'}),
             'group_name': forms.TextInput(attrs={'class': 'form-control'}),

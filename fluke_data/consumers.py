@@ -112,6 +112,7 @@ class DataConsumer(AsyncWebsocketConsumer):
             'sn': self.instrument.SN,
             'pn': self.instrument.PN,
             'instrument_name': self.instrument.INSTRUMENT_NAME,
+            'instrument_location': self.thermo.equipment_fisical_location,
             'group_name': self.instrument.GROUP_NAME,
             'sensor_id': sensor.id,
             'sensor_name': sensor.sensor_name,
