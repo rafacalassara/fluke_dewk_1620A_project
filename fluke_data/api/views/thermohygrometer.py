@@ -10,7 +10,7 @@ from rest_framework import status, viewsets
 from rest_framework.authentication import (BasicAuthentication,
                                            SessionAuthentication)
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.versioning import URLPathVersioning
 
@@ -22,6 +22,16 @@ class ThermohygrometerViewSet(viewsets.ViewSet):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
     versioning_class = URLPathVersioning
+
+    def get_permissions(self):
+        """
+        Set custom permissions based on the action.
+        """
+        if self.action == 'list' or self.action == 'connected':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_versioned_response(self, request, data):
         if request.version == 'v1':
