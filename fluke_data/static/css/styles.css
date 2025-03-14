@@ -30,6 +30,16 @@ body {
 
 .header {
     border-bottom: 2px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-icon {
+    height: 100px;
+    width: 100px;
+    margin-right: 10px;
+    object-fit: contain;
 }
 
 .footer {
