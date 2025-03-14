@@ -6,7 +6,7 @@
 {% block title %}Real Time Data{% endblock %}
 
 {% block content %}
-    <div class="control-panel">
+    <div class="container">
         <h2>Real-Time Sensor Measurements</h2>
         <form id="data-form" class="data-form">
             <div class="form-row" style="display: flex; justify-content: center;">
@@ -19,23 +19,23 @@
                 </div>
             </div>
         </form>
-    </div>
-    
-    <div class="dashboard-layout">
-        <!-- Sidebar for instrument connections -->
-        <div id="connections-sidebar" class="connections-sidebar">
-            <h3>Connected Instruments</h3>
-            <div id="connections-container">
-                <div id="no-instruments-message" class="no-instruments-message">
-                    <p>No instruments connected</p>
-                    <small>Connect an instrument using the form above</small>
+        
+        <div class="dashboard-layout">
+            <!-- Sidebar for instrument connections -->
+            <div id="connections-sidebar" class="connections-sidebar">
+                <h3>Connected Instruments</h3>
+                <div id="connections-container">
+                    <div id="no-instruments-message" class="no-instruments-message">
+                        <p>No instruments connected</p>
+                        <small>Connect an instrument using the form above</small>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Main content area for sensors -->
-        <div class="main-content">
-            <div id="result-container" class="result-container"></div>
+            
+            <!-- Main content area for sensors -->
+            <div class="main-content">
+                <div id="result-container" class="result-container"></div>
+            </div>
         </div>
     </div>
 {% endblock %}

@@ -20,6 +20,8 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     text-align: center;
+    width: 95%; /* Make container wider */
+    max-width: 1400px; /* Add maximum width for very large screens */
 }
 
 .header, .footer {
@@ -40,10 +42,11 @@ body {
 }
 
 .result-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns of equal width */
+    gap: 20px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .result {
@@ -431,10 +434,30 @@ label {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 15px;
-    margin: 10px;
+    margin: 0; /* Remove margin-bottom */
     background-color: white;
-    width: 350px;
+    width: 100%; /* Take full width of grid cell */
     transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* For responsive design - on smaller screens, show fewer boxes per row */
+@media (max-width: 1200px) {
+    .sensor-box {
+        width: calc(50% - 20px); /* Two boxes per row on medium screens */
+    }
+    .result-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .sensor-box {
+        width: 100%; /* One box per row on small screens */
+    }
+    .result-container {
+        grid-template-columns: 1fr; /* 1 column on small screens */
+    }
 }
 
 .sensor-box:hover {
@@ -559,6 +582,7 @@ label {
 .main-content {
     flex: 1;
     min-width: 0;
+    padding-right: 15px; /* Add padding to prevent sensor boxes from hitting edge */
 }
 
 /* Connection card in sidebar */
@@ -684,4 +708,12 @@ label {
     0% { opacity: 0.6; }
     50% { opacity: 1; }
     100% { opacity: 0.6; }
+}
+
+/* Make sure the result container maintains the grid layout regardless of parent */
+#result-container.result-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: 100%;
 }
