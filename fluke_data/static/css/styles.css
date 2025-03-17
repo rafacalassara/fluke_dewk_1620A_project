@@ -40,6 +40,7 @@ body {
     width: 100px;
     margin-right: 10px;
     object-fit: contain;
+    border-radius: 12px; /* Adds rounded corners to the image */
 }
 
 .footer {
