@@ -21,6 +21,57 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 });
 
+// Function to initialize all available instruments
+async function initializeAllInstruments() {
+    const dropdown = document.getElementById('thermohygrometer');
+    const options = dropdown.options;
+    let connectedCount = 0;
+    let totalCount = 0;
+    
+    if (options.length === 0) {
+        alert('No instruments available to connect.');
+        return;
+    }
+    
+    // Show loading indicator or disable button during connection
+    const initButton = document.querySelector('button[onclick="initializeAllInstruments()"]');
+    if (initButton) {
+        initButton.disabled = true;
+        initButton.textContent = 'Connecting...';
+    }
+    
+    for (let i = 0; i < options.length; i++) {
+        const thermoId = options[i].value;
+        totalCount++;
+        
+        // Skip if already connected
+        if (thermohygrometerConnections[thermoId]) {
+            connectedCount++;
+            continue;
+        }
+        
+        // Select this option in the dropdown
+        dropdown.selectedIndex = i;
+        
+        // Connect this instrument
+        await addThermohygrometer();
+        
+        // Small delay to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Re-enable button
+    if (initButton) {
+        initButton.disabled = false;
+        initButton.textContent = 'Initialize All';
+    }
+    
+    // Show success message
+    if (totalCount === connectedCount) {
+        alert('All instruments were already connected.');
+    }
+}
+
 async function addThermohygrometer() {
     const dropdown = document.getElementById('thermohygrometer');
     const selectedThermohygrometer = dropdown.value;
