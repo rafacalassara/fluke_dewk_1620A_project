@@ -1,8 +1,34 @@
 // static/js/main.js
 
 let thermohygrometerConnections = {};
+let lastMeasurementTimes = {}; // Track the last time we received data for each connection
 const RECONNECT_DELAY = 5000;
 const MAX_RECONNECT_ATTEMPTS = 3;
+const CONNECTION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+// Periodically check if connections need to be reset due to inactivity
+setInterval(() => {
+    const now = Date.now();
+    Object.keys(thermohygrometerConnections).forEach(id => {
+        const lastTime = lastMeasurementTimes[id] || 0;
+        if (now - lastTime > CONNECTION_TIMEOUT_MS) {
+            console.log(`No data received for instrument ${id} in over 15 minutes, resetting connection...`);
+            closeConnection(id);
+            // After a short delay, attempt to reconnect
+            setTimeout(() => {
+                const dropdown = document.getElementById('thermohygrometer');
+                // Find and select the right option for this instrument
+                for (let i = 0; i < dropdown.options.length; i++) {
+                    if (dropdown.options[i].value === id) {
+                        dropdown.selectedIndex = i;
+                        addThermohygrometer();
+                        break;
+                    }
+                }
+            }, 3000);
+        }
+    });
+}, 60000); // Check every minute
 
 document.addEventListener('DOMContentLoaded', async function () {
     try {
@@ -161,6 +187,9 @@ async function addThermohygrometer() {
                 console.log(`No data received for ${selectedInstrumentName}`);
                 return;
             }
+            
+            // Update last measurement time
+            lastMeasurementTimes[selectedThermohygrometer] = Date.now();
             
             // Get reference to the result container
             const resultContainer = document.getElementById('result-container');
