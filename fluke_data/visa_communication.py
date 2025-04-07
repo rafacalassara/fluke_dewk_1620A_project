@@ -13,7 +13,7 @@ class Instrument(Thermohygrometer):
         # Use async method to save data to the database
         sync_to_async(self.save_to_database)()
 
-    def get_data(self, channel='1'):
+    def get_data(self, channel=None):
         """
         Retrieves live data from the specified channel of the thermohygrometer.
 
@@ -34,7 +34,7 @@ class Instrument(Thermohygrometer):
         while True:
             try:
                 data = self.instrument.query(f"READ? {channel}")
-                data = self._parse_live_data_one_channel(data=data)
+                data = self._parse_live_data_one_channel(data=data,channel=channel)
                 return data
             except Exception as e:
                 return str(e)
@@ -48,6 +48,10 @@ class Instrument(Thermohygrometer):
                   Each channel's data includes temperature, humidity, and date.
         """
         result = {}
+        if self.datetime_adjust_made:
+            self.datetime_adjust_made = False
+            return result
+        
         try:
             # Get data from channel 1
             ch1_data = self.get_data(channel='1')
@@ -58,7 +62,6 @@ class Instrument(Thermohygrometer):
             ch2_data = self.get_data(channel='2')
             if isinstance(ch2_data, dict):
                 result[2] = ch2_data
-                
             return result
         except Exception as e:
             print(f"Error getting data from all channels: {str(e)}")

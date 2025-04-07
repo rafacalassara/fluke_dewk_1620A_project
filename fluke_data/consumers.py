@@ -50,7 +50,7 @@ class DataConsumer(AsyncWebsocketConsumer):
                         raise Exception("No sensors found for this thermohygrometer")
                 
                 # Get data from all channels
-                data_all_channels = await sync_to_async(self.instrument.get_live_data_all_channels)()
+                data_all_channels = await sync_to_async(self.instrument.get_live_data_all_channels)()     
                 if data_all_channels:
                     # Process and broadcast data for each sensor/channel
                     for sensor in self.sensors:

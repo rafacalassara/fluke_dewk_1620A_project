@@ -1,10 +1,10 @@
 # fluke_dewk_1620A_project\thermohygrometer\thermohygrometer.py
 
 import time
+
 from datetime import datetime
 
 import pyvisa
-
 
 class Thermohygrometer:
     SN: str
@@ -19,9 +19,9 @@ class Thermohygrometer:
         self.ip_address = ip
         self.port = port
         self.rm = pyvisa.ResourceManager()
-
         self.instrument = None
         self._format_data = None
+        self.datetime_adjust_made = False
 
     def connect(self):
         try:
@@ -30,10 +30,10 @@ class Thermohygrometer:
             print(f"thermohygrometer.connect: Error connecting to DewK 1620A at {self.ip_address}: {e}")
             self.instrument = None
             return False
-        # print(self.instrument.__dict__)
-        self.instrument.timeout = 2000  # Timeout de 2 segundos
+        self.instrument.timeout = 2000 # Timeout de 2 segundos
         self.instrument.read_termination = '\r'
         self.instrument.write_termination = '\r'
+        self._update_date_time() # Adiciona a atualização de data e hora ao conectar
         self.set_format_data()
         self.get_format_data()
         self.get_instrument_personal_info()
@@ -59,66 +59,30 @@ class Thermohygrometer:
         response = self.send_command('FORMat:TDST:STATe?')
         self._format_data = response == '1'
         return self._format_data
-    
+
     def set_format_data(self, status: bool = True):
         status = '1' if status else '0'
         self.send_command(f'FORM:TDST:STAT {status}', response_needed=False)
 
-    def get_live_data(self, channel=1):
-        """Get live data from a specified channel (1 or 2)"""
-        if not self.instrument:
-            return None
-        
-        if channel not in [1, 2]:
-            raise ValueError("Channel must be 1 or 2")
-        
-        try:
-            data = self.send_command(f'READ? {channel}')
-            if not data:
-                return None
-                
-            return self._parse_live_data_one_channel(data, channel)
-        except Exception as e:
-            print(f"Error getting live data for channel {channel}: {e}")
-            return None
-    
-    def get_live_data_all_channels(self):
-        """Get live data from all available channels"""
-        results = {}
-        
-        # First channel data
-        ch1_data = self.get_live_data(channel=1)
-        if ch1_data:
-            results[1] = ch1_data
-            
-        # Second channel data
-        ch2_data = self.get_live_data(channel=2)
-        if ch2_data:
-            results[2] = ch2_data
-            
-        return results
-
-    def _parse_live_data_one_channel(self, data, channel=1):
+    def _parse_live_data_one_channel(self, data, channel=None):
         """
         Parses live data received from one channel of the thermohygrometer.
-        
+
         Args:
             data (str): The raw data string received from the thermohygrometer.
             channel (int): The channel number (1 or 2)
-            
+
         Returns:
             dict: A dictionary containing the parsed temperature, humidity, and (if applicable) date.
-                  Now includes the channel number.
+            Now includes the channel number.
         """
         parsed_data = data.split(',')
         result = {'channel': channel}
-        
         if self._format_data is True:
             # Skip the first two elements
             parsed_data = parsed_data[2:]
             result['temperature'] = float(parsed_data.pop(0))
             result['humidity'] = float(parsed_data.pop(1))
-            
             # If date information is available
             if len(parsed_data) >= 6:
                 year, month, day, hour, minute, second = map(int, parsed_data[2:])
@@ -129,7 +93,6 @@ class Thermohygrometer:
             # Basic format: "22.80,47.3"
             result['temperature'] = float(parsed_data[0])
             result['humidity'] = float(parsed_data[1])
-
         return result
 
     def get_instrument_personal_info(self):
@@ -143,13 +106,12 @@ class Thermohygrometer:
     def get_correction(self, calibration_certificate, measurement_type, measured_value):
         """
         Get the correction for a given measurement based on the calibration_certificate's.
-        
+
         :param calibration_certificate: ThermohygrometerModel instance
         :param measurement_type: 'temperature' or 'humidity'
         :param measured_value: The measured value to correct
         :return: The correction value to apply
         """
-        
         if not calibration_certificate:
             return 0  # No correction if no calibration is available
 
@@ -167,7 +129,7 @@ class Thermohygrometer:
             ]
         else:
             raise ValueError("measurement_type must be 'temperature' or 'humidity'")
-        
+
         # Sort points by measurement value
         points.sort(key=lambda x: x[0])
         
@@ -205,3 +167,51 @@ class Thermohygrometer:
                 return float(value.replace(',','.'))
         else:
             return value
+
+    def _get_instrument_date_time(self):
+        """Consulta a data e hora atual do instrumento."""
+        date_response = self.send_command("SYSTem:DATE?")
+        time_response = self.send_command("SYSTem:TIME?")
+        if date_response and time_response:
+            try:
+                year, month, day = map(int, date_response.split(','))
+                hour, minute, second = map(int, time_response.split(','))
+                instrument_date_time = datetime(year, month, day, hour, minute, second)
+                return instrument_date_time
+            except ValueError:
+                print(f"Formato de data ou hora inválido recebido: Data: {date_response}, Hora: {time_response}")
+                return None
+        return None
+
+    def _set_instrument_date_time(self, now):
+        """Define a data e hora do instrumento."""
+        year = now.year
+        month = now.month
+        day = now.day
+        hour = now.hour
+        minute = now.minute
+        second = now.second
+        date_str = f"{year},{month},{day}"
+        time_str = f"{hour},{minute},{second}"
+
+        # Se a senha não for necessária ou fornecida, ou se a proteção estiver desabilitada
+        self.send_command(f"SYSTem:DATE {date_str}", response_needed=False)
+        time.sleep(0.1)
+        self.send_command(f"SYSTem:TIME {time_str}", response_needed=False)
+        print("Data e hora remotamente atualizadas.")
+
+    def _update_date_time(self):
+        """Verifica e atualiza a data e hora do instrumento se necessário."""
+        instrument_date_time = self._get_instrument_date_time()
+        now = datetime.now()
+
+        if instrument_date_time:
+            delta = now - instrument_date_time
+            diff_seconds = abs(delta.total_seconds())
+            diff_minutes = diff_seconds / 60
+
+            if diff_minutes > 5:
+                self._set_instrument_date_time(now)
+                self.datetime_adjust_made = True
+        else:
+            print("Não foi possível obter a data e hora do instrumento.")
