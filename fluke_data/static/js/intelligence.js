@@ -3,6 +3,26 @@ document.addEventListener('DOMContentLoaded', async function () {
     const form = document.querySelector('form')
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+    // Mapa de cores fixas para instrumentos
+    const instrumentColorMap = {};
+
+    // Paleta de cores predefinida para instrumentos
+    const colorPalette = [
+        '#FF6384', // vermelho rosado
+        '#36A2EB', // azul
+        '#FFCE56', // amarelo
+        '#4BC0C0', // turquesa
+        '#9966FF', // roxo
+        '#FF9F40', // laranja
+        '#2ECC71', // verde esmeralda
+        '#E74C3C', // vermelho tomate
+        '#3498DB', // azul dodger
+        '#9B59B6', // ametista
+        '#1ABC9C', // verde água
+        '#F1C40F', // amarelo sol
+        '#E67E22', // laranja cenoura
+        '#34495E'  // azul midnight
+    ];
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -19,7 +39,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         getChartData(data);
         getAnalysis(data);
 
-    })
+    });
+
+    // Obtém cor fixa para um instrumento
+    function getInstrumentColor(instrument) {
+        if (!instrumentColorMap[instrument]) {
+            // Atribui a próxima cor da paleta, ou gera uma aleatória se acabarem as cores da paleta
+            const colorIndex = Object.keys(instrumentColorMap).length % colorPalette.length;
+            instrumentColorMap[instrument] = colorPalette[colorIndex];
+        }
+        return instrumentColorMap[instrument];
+    }
 
     let chartInstance = {};
 
@@ -32,107 +62,233 @@ document.addEventListener('DOMContentLoaded', async function () {
         const labels = data.map(item => item.instrument_name);
         const values = data.map(item => item.percent_out_of_limits);
 
+        // Destruir gráficos existentes se houver
+        if (chartInstance.barChart) {
+            chartInstance.barChart.destroy();
+        }
+        if (chartInstance.temperatureChart) {
+            chartInstance.temperatureChart.destroy();
+        }
+        if (chartInstance.humidityChart) {
+            chartInstance.humidityChart.destroy();
+        }
 
-        chartInstance.ctxBar?.destroy();
-        chartInstance.temperatureCtx?.destroy();
-        chartInstance.humidityCtx?.destroy();
-
-
-        const ctxBar = document.getElementById('outOfLimitsChart').getContext('2d');
-        chartInstance.ctxBar = new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: `Percentual fora dos limites (%) - Período: ${analysis_period}`,
-                    data: values,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
+        // Configuração do gráfico de barras
+        const barChartOptions = {
+            chart: {
+                type: 'bar',
+                height: 350
             },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return value + '%';
-                            }
-                        }
+            series: [{
+                name: 'Percentual fora dos limites',
+                data: values
+            }],
+            xaxis: {
+                categories: labels
+            },
+            yaxis: {
+                labels: {
+                    formatter: function (val) {
+                        return val.toFixed(2) + '%';
+                    }
+                },
+                min: 0
+            },
+            title: {
+                text: `Percentual fora dos limites (%) - Período: ${analysis_period}`,
+                align: 'center'
+            },
+            colors: ['#36a2eb'],
+            plotOptions: {
+                bar: {
+                    borderRadius: 2,
+                    dataLabels: {
+                        position: 'top'
                     }
                 }
-            }
-        });
-
-        // Gráfico de Temperatura
-        const temperatureCtx = document.getElementById('temperatureChart').getContext('2d');
-        const temperatureDatasets = Object.keys(temperature_data).map(instrument => ({
-            label: instrument,
-            data: temperature_data[instrument].map(entry => ({
-                x: entry.timestamp,
-                y: entry.value
-            })),
-            borderColor: getRandomColor(),
-            fill: false,
-            pointRadius: 0.5,
-            spanGaps: true,
-        }));
-
-        chartInstance.temperatureCtx = new Chart(temperatureCtx, {
-            type: 'line',
-            data: {
-                datasets: temperatureDatasets
             },
-            options: {
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { unit: 'hour' }
-                    },
-                    y: {
-                        beginAtZero: false
-                    }
+            dataLabels: {
+                enabled: true,
+                formatter: function (val) {
+                    return val.toFixed(2) + '%';
+                },
+                offsetY: -20,
+                style: {
+                    fontSize: '12px',
+                    colors: ["#304758"]
                 }
             }
+        };
+
+        // Criando o gráfico de barras
+        chartInstance.barChart = new ApexCharts(document.querySelector('#outOfLimitsChart'), barChartOptions);
+        chartInstance.barChart.render();
+
+        // Configuração do gráfico de temperatura
+        const temperatureSeries = Object.keys(temperature_data).map(instrument => {
+            const color = getInstrumentColor(instrument);
+            return {
+                name: instrument,
+                data: temperature_data[instrument]
+                    .filter(entry => entry.value !== null && !isNaN(entry.value))
+                    .map(entry => ({
+                        x: new Date(entry.timestamp).getTime(),
+                        y: entry.value
+                    })),
+                color: color
+            };
         });
 
-        // Gráfico de Umidade
-        const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-        const humidityDatasets = Object.keys(humidity_data).map(instrument => ({
-            label: instrument,
-            data: humidity_data[instrument].map(entry => ({
-                x: entry.timestamp,
-                y: entry.value
-            })),
-            borderColor: getRandomColor(),
-            fill: false,
-            pointRadius: 0.5,
-            spanGaps: false,
-        }));
-
-        chartInstance.humidityCtx = new Chart(humidityCtx, {
-            type: 'line',
-            data: {
-                datasets: humidityDatasets
-            },
-            options: {
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { unit: 'hour' }
-                    },
-                    y: {
-                        beginAtZero: false
+        const temperatureChartOptions = {
+            chart: {
+                type: 'line',
+                height: 350,
+                animations: {
+                    enabled: false  // Desabilita animações para melhorar o desempenho
+                },
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
                     }
                 }
+            },
+            series: temperatureSeries,
+            colors: temperatureSeries.map(series => series.color),
+            stroke: {
+                curve: 'straight',
+                width: 1.5,
+                lineCap: 'butt'
+            },
+            markers: {
+                size: 0,
+                hover: {
+                    size: 4
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    datetimeUTC: false,
+                    format: 'dd/MM HH:mm'
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Temperatura (°C)'
+                },
+                decimalsInFloat: 1
+            },
+            tooltip: {
+                shared: false,
+                intersect: false,
+                x: {
+                    format: 'dd MMM yyyy HH:mm:ss'
+                }
+            },
+            legend: {
+                position: 'top'
+            },
+            // Definição explícita para não conectar nulos
+            connectNulls: false,
+            // Não fazer a interpolação de dados
+            noData: {
+                text: 'Sem dados disponíveis'
             }
+        };
+
+        // Criando o gráfico de temperatura
+        chartInstance.temperatureChart = new ApexCharts(document.querySelector('#temperatureChart'), temperatureChartOptions);
+        chartInstance.temperatureChart.render();
+
+        // Configuração do gráfico de umidade
+        const humiditySeries = Object.keys(humidity_data).map(instrument => {
+            const color = getInstrumentColor(instrument);
+            return {
+                name: instrument,
+                data: humidity_data[instrument]
+                    .filter(entry => entry.value !== null && !isNaN(entry.value))
+                    .map(entry => ({
+                        x: new Date(entry.timestamp).getTime(),
+                        y: entry.value
+                    })),
+                color: color
+            };
         });
 
-    }
+        const humidityChartOptions = {
+            chart: {
+                type: 'line',
+                height: 350,
+                animations: {
+                    enabled: false  // Desabilita animações para melhorar o desempenho
+                },
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                }
+            },
+            series: humiditySeries,
+            colors: humiditySeries.map(series => series.color), // Usa as cores definidas para cada série
+            stroke: {
+                curve: 'straight',
+                width: 1.5,
+                lineCap: 'butt'
+            },
+            markers: {
+                size: 0,
+                hover: {
+                    size: 4
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    datetimeUTC: false,
+                    format: 'dd/MM HH:mm'
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Umidade (%)'
+                },
+                decimalsInFloat: 1
+            },
+            tooltip: {
+                shared: false,
+                intersect: false,
+                x: {
+                    format: 'dd MMM yyyy HH:mm:ss'
+                }
+            },
+            legend: {
+                position: 'top'
+            },
+            // Definição explícita para não conectar nulos
+            connectNulls: false,
+            // Não fazer a interpolação de dados
+            noData: {
+                text: 'Sem dados disponíveis'
+            }
+        };
 
-    function getRandomColor() {
-        return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`;
+        // Criando o gráfico de umidade
+        chartInstance.humidityChart = new ApexCharts(document.querySelector('#humidityChart'), humidityChartOptions);
+        chartInstance.humidityChart.render();
     }
 
     function populateCard(data) {

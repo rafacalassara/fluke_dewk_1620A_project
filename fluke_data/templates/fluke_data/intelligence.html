@@ -52,17 +52,17 @@
 
     <div>
         <h3>Gráfico de Percentual Fora dos Limites</h3>
-        <canvas id="outOfLimitsChart" width="400" height="200"></canvas>
+        <div id="outOfLimitsChart" style="height: 350px;"></div>
     </div>
 
     <div>
         <h3>Gráfico de Temperatura</h3>
-        <canvas id="temperatureChart" width="400" height="200"></canvas>
+        <div id="temperatureChart" style="height: 350px;"></div>
     </div>
 
     <div>
         <h3>Gráfico de Umidade</h3>
-        <canvas id="humidityChart" width="400" height="200"></canvas>
+        <div id="humidityChart" style="height: 350px;"></div>
     </div>
 
 
@@ -109,7 +109,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="{% static 'js/intelligence.js' %}"></script>
 {% endblock %}
