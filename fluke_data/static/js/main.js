@@ -208,6 +208,29 @@ async function addThermohygrometer() {
             const correctedHumidity = sensorData.corrected_humidity;
             const date = sensorData.date;
 
+            // Verificar se as medidas não corrigidas são 0, indicando potencial problema na comunicação
+            if ((temperature === 0 || humidity === 0) && sensorData.sensor_id) {
+                console.warn(`Detected zero raw measurements for ${selectedInstrumentName}, resetting connection...`);
+                // Fechamos a conexão atual
+                closeConnection(selectedThermohygrometer);
+                
+                // Depois de um breve atraso, tentamos reconectar
+                setTimeout(() => {
+                    console.log(`Attempting to reconnect to ${selectedInstrumentName}...`);
+                    const dropdown = document.getElementById('thermohygrometer');
+                    // Encontrar e selecionar a opção correta para este instrumento
+                    for (let i = 0; i < dropdown.options.length; i++) {
+                        if (dropdown.options[i].value === selectedThermohygrometer) {
+                            dropdown.selectedIndex = i;
+                            addThermohygrometer();
+                            break;
+                        }
+                    }
+                }, 3000);
+                
+                return; // Interrompe o processamento adicional desta mensagem
+            }
+
             // Retrieve limits
             const thermoInfo = sensorData.thermo_info;
             const minTemperature = thermoInfo.min_temperature ?? -Infinity;
