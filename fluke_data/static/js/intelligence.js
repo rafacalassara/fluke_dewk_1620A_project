@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         };
 
         getChartData(data);
-        getAnalysis(data);
+        // getAnalysis(data);
 
     });
 
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let chartInstance = {};
 
-    function showCharts({ data, analysis_period, humidity_data, temperature_data, total_time_available }) {
+    function showCharts({ data, analysis_period, humidity_data, temperature_data, total_time_available, timestamps }) {
 
         document.querySelector('[data-analysis-period]').textContent = analysis_period
         document.querySelector('[data-time-available]').textContent = total_time_available
@@ -124,16 +124,59 @@ document.addEventListener('DOMContentLoaded', async function () {
         chartInstance.barChart = new ApexCharts(document.querySelector('#outOfLimitsChart'), barChartOptions);
         chartInstance.barChart.render();
 
-        // Configuração do gráfico de temperatura
+        // Identificar quais timestamps realmente têm dados em qualquer instrumento
+        const timestampsWithData = new Set();
+        const allTimestamps = [];
+        
+        // Processar dados de temperatura para encontrar todos os timestamps com dados reais
+        Object.keys(temperature_data).forEach(instrument => {
+            temperature_data[instrument].forEach(entry => {
+                if (entry.value !== null && !isNaN(entry.value)) {
+                    timestampsWithData.add(entry.timestamp);
+                }
+                allTimestamps.push(entry.timestamp);
+            });
+        });
+        
+        // Processar dados de umidade para encontrar todos os timestamps com dados reais
+        Object.keys(humidity_data).forEach(instrument => {
+            humidity_data[instrument].forEach(entry => {
+                if (entry.value !== null && !isNaN(entry.value)) {
+                    timestampsWithData.add(entry.timestamp);
+                }
+                allTimestamps.push(entry.timestamp);
+            });
+        });
+        
+        // Ordenar todos os timestamps únicos com dados
+        const sortedTimestamps = Array.from(timestampsWithData).sort();
+        
+        // Obter timestamps mínimo e máximo para os limites do eixo (se houver dados)
+        const minTimestamp = sortedTimestamps.length > 0 ? 
+            new Date(sortedTimestamps[0]).getTime() : null;
+        const maxTimestamp = sortedTimestamps.length > 0 ? 
+            new Date(sortedTimestamps[sortedTimestamps.length - 1]).getTime() : null;
+        
+        // Agrupar timestamps por dia para categorias do eixo x
+        const dayGroups = {};
+        sortedTimestamps.forEach(timestamp => {
+            const date = timestamp.split(' ')[0];
+            if (!dayGroups[date]) {
+                dayGroups[date] = [];
+            }
+            dayGroups[date].push(timestamp);
+        });
+
+        // Configuração do gráfico de temperatura com novos limites de eixo
         const temperatureSeries = Object.keys(temperature_data).map(instrument => {
             const color = getInstrumentColor(instrument);
             return {
                 name: instrument,
                 data: temperature_data[instrument]
-                    .filter(entry => entry.value !== null && !isNaN(entry.value))
+                    .filter(entry => timestampsWithData.has(entry.timestamp) || entry.value !== null)
                     .map(entry => ({
                         x: new Date(entry.timestamp).getTime(),
-                        y: entry.value
+                        y: (entry.value === null || isNaN(entry.value)) ? null : entry.value
                     })),
                 color: color
             };
@@ -157,6 +200,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                         pan: true,
                         reset: true
                     }
+                },
+                zoom: {
+                    enabled: true
                 }
             },
             series: temperatureSeries,
@@ -177,7 +223,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                 labels: {
                     datetimeUTC: false,
                     format: 'dd/MM HH:mm'
-                }
+                },
+                // Definir min/max para mostrar apenas períodos com dados
+                min: minTimestamp,
+                max: maxTimestamp,
+                // Agrupar por dias úteis
+                tickAmount: Object.keys(dayGroups).length,
+                // Adicionar rótulos para cada dia útil
+                categories: Object.keys(dayGroups).map(day => {
+                    const date = new Date(day);
+                    return date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                })
             },
             yaxis: {
                 title: {
@@ -197,7 +253,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             },
             // Definição explícita para não conectar nulos
             connectNulls: false,
-            // Não fazer a interpolação de dados
             noData: {
                 text: 'Sem dados disponíveis'
             }
@@ -207,16 +262,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         chartInstance.temperatureChart = new ApexCharts(document.querySelector('#temperatureChart'), temperatureChartOptions);
         chartInstance.temperatureChart.render();
 
-        // Configuração do gráfico de umidade
+        // Configuração do gráfico de umidade com os mesmos limites de eixo
         const humiditySeries = Object.keys(humidity_data).map(instrument => {
             const color = getInstrumentColor(instrument);
             return {
                 name: instrument,
                 data: humidity_data[instrument]
-                    .filter(entry => entry.value !== null && !isNaN(entry.value))
+                    .filter(entry => timestampsWithData.has(entry.timestamp) || entry.value !== null)
                     .map(entry => ({
                         x: new Date(entry.timestamp).getTime(),
-                        y: entry.value
+                        y: (entry.value === null || isNaN(entry.value)) ? null : entry.value
                     })),
                 color: color
             };
@@ -243,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             },
             series: humiditySeries,
-            colors: humiditySeries.map(series => series.color), // Usa as cores definidas para cada série
+            colors: humiditySeries.map(series => series.color),
             stroke: {
                 curve: 'straight',
                 width: 1.5,
@@ -260,7 +315,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                 labels: {
                     datetimeUTC: false,
                     format: 'dd/MM HH:mm'
-                }
+                },
+                // Definir min/max para mostrar apenas períodos com dados
+                min: minTimestamp,
+                max: maxTimestamp,
+                // Agrupar por dias úteis
+                tickAmount: Object.keys(dayGroups).length,
+                // Adicionar rótulos para cada dia útil
+                categories: Object.keys(dayGroups).map(day => {
+                    const date = new Date(day);
+                    return date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                })
             },
             yaxis: {
                 title: {
@@ -280,7 +345,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             },
             // Definição explícita para não conectar nulos
             connectNulls: false,
-            // Não fazer a interpolação de dados
             noData: {
                 text: 'Sem dados disponíveis'
             }

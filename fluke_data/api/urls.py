@@ -5,8 +5,7 @@ from .views import (
     CertificateViewSet,
     ExportDataViewSet,
     EnvironmentalAnalysisViewSet,
-    ThermohygrometerViewSet,
-    CrewAnalysisViewSet
+    ThermohygrometerViewSet
 )
 from fluke_data.api.views.sensor import SensorViewSet
 
@@ -31,11 +30,6 @@ router_v1.register(
     r'certificates',
     CertificateViewSet,
     basename='api-certificate'
-)
-router_v1.register(
-    r'crew-analysis',
-    CrewAnalysisViewSet,
-    basename='api-crew-analysis'
 )
 router_v1.register(
     r'sensors',

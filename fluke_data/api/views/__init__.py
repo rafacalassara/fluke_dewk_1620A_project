@@ -8,12 +8,10 @@ from .certificate import CertificateViewSet
 from .export_data import ExportDataViewSet
 from .environmental_analysis import EnvironmentalAnalysisViewSet
 from .thermohygrometer import ThermohygrometerViewSet
-from .crew_analysis import CrewAnalysisViewSet
 
 __all__ = [
     'CertificateViewSet',
     'ExportDataViewSet',
     'EnvironmentalAnalysisViewSet',
     'ThermohygrometerViewSet',
-    'CrewAnalysisViewSet'
 ]

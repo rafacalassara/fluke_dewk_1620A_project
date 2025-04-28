@@ -36,6 +36,9 @@ Before setting up and installing, ensure you have the following:
 - A compatible operating system (**Windows, macOS, or Linux**)
 - **Python 3.7+** installed
 - **UV package manager** ([GitHub - astral-sh/uv](https://github.com/astral-sh/uv))
+   ```sh
+   pip install uv
+   ```
 - A code editor or IDE (**VS Code, PyCharm**)
 - **Docker & Docker Compose** installed
 - Fluke DewK 1620A Thermohygrometer device connected
@@ -48,12 +51,18 @@ Before setting up and installing, ensure you have the following:
    cd fluke-dewk-1620a-management
    ```
 
-2️⃣ Create and activate a virtual environment using UV:
+2️⃣ Activate the proxy (if needed, for PowerShell):
+   ```powershell
+   .\ProxyManager.ps1 -on
+   ```
+   *Replace `"your_proxy_address:port"` with your actual proxy server address and port.*
+
+3️⃣ Create and activate a virtual environment using UV:
    ```sh
    uv venv
    ```
 
-3️⃣ Activate the virtual environment:
+4️⃣ Activate the virtual environment:
    - **Windows:**
      ```sh
      ./.venv/Scripts/activate
@@ -63,7 +72,7 @@ Before setting up and installing, ensure you have the following:
      source ./.venv/bin/activate
      ```
 
-4️⃣ Install dependencies:
+5️⃣ Install dependencies:
    ```sh
    uv sync
    ```
@@ -107,7 +116,11 @@ For a quick and easy setup, use **Docker Compose**:
 
 1️⃣ Start the Django development server:
    ```sh
+   # Local development only
    python manage.py runserver
+   
+   # Allow external connections (accessible from other devices on network)
+   python manage.py runserver 0.0.0.0:8000
    ```
 
 2️⃣ Open your browser and visit:
